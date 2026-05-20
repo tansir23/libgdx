@@ -16,8 +16,9 @@
 
 package java.nio;
 
-import com.google.gwt.typedarrays.client.ArrayBufferView;
-import com.google.gwt.typedarrays.client.Int32Array;
+import com.google.gwt.typedarrays.shared.ArrayBufferView;
+import com.google.gwt.typedarrays.shared.Int32Array;
+import com.google.gwt.typedarrays.shared.TypedArrays;
 
 /** This class wraps a byte buffer to be a int buffer.
  * <p>
@@ -28,7 +29,8 @@ import com.google.gwt.typedarrays.client.Int32Array;
  * <li>The byte buffer's position and limit are NOT linked with the adapter. The adapter extends Buffer, thus has its own position
  * and limit.</li>
  * </ul>
- * </p> */
+ * </p>
+ */
 final class DirectReadWriteIntBufferAdapter extends IntBuffer implements HasArrayBufferView {
 
 	static IntBuffer wrap (DirectReadWriteByteBuffer byteBuffer) {
@@ -42,7 +44,7 @@ final class DirectReadWriteIntBufferAdapter extends IntBuffer implements HasArra
 		super((byteBuffer.capacity() >> 2));
 		this.byteBuffer = byteBuffer;
 		this.byteBuffer.clear();
-		this.intArray = Int32Array.create(byteBuffer.byteArray.getBuffer(), byteBuffer.byteArray.getByteOffset(), capacity);
+		this.intArray = TypedArrays.createInt32Array(byteBuffer.byteArray.buffer(), byteBuffer.byteArray.byteOffset(), capacity);
 	}
 
 	// TODO(haustein) This will be slow
@@ -69,7 +71,8 @@ final class DirectReadWriteIntBufferAdapter extends IntBuffer implements HasArra
 
 	@Override
 	public IntBuffer duplicate () {
-		DirectReadWriteIntBufferAdapter buf = new DirectReadWriteIntBufferAdapter((DirectReadWriteByteBuffer)byteBuffer.duplicate());
+		DirectReadWriteIntBufferAdapter buf = new DirectReadWriteIntBufferAdapter(
+			(DirectReadWriteByteBuffer)byteBuffer.duplicate());
 		buf.limit = limit;
 		buf.position = position;
 		buf.mark = mark;

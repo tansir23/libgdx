@@ -16,9 +16,7 @@
 
 package com.badlogic.gdx.utils;
 
-/** A simple linked list that pools its nodes. This is a highly specialized class used in a couple of 2D scene graph classes. I
- * wouldn't use it if i was you :)
- * 
+/** A simple linked list that pools its nodes.
  * @author mzechner */
 public class PooledLinkedList<T> {
 	static final class Item<T> {
@@ -37,12 +35,14 @@ public class PooledLinkedList<T> {
 
 	public PooledLinkedList (int maxPoolSize) {
 		this.pool = new Pool<Item<T>>(16, maxPoolSize) {
+			@Override
 			protected Item<T> newObject () {
 				return new Item<T>();
 			}
 		};
 	}
 
+	/** Adds the specified object to the end of the list regardless of iteration status */
 	public void add (T object) {
 		Item<T> item = pool.obtain();
 		item.payload = object;
@@ -62,15 +62,43 @@ public class PooledLinkedList<T> {
 		size++;
 	}
 
-	/** Starts iterating over the lists items */
+	/** Adds the specified object to the head of the list regardless of iteration status */
+	public void addFirst (T object) {
+		Item<T> item = pool.obtain();
+		item.payload = object;
+		item.next = head;
+		item.prev = null;
+
+		if (head != null) {
+			head.prev = item;
+		} else {
+			tail = item;
+		}
+
+		head = item;
+
+		size++;
+	}
+
+	/** Returns the number of items in the list */
+	public int size () {
+		return size;
+	}
+
+	/** Starts iterating over the list's items from the head of the list */
 	public void iter () {
 		iter = head;
+	}
+
+	/** Starts iterating over the list's items from the tail of the list */
+	public void iterReverse () {
+		iter = tail;
 	}
 
 	/** Gets the next item in the list
 	 * 
 	 * @return the next item in the list or null if there are no more items */
-	public T next () {
+	public @Null T next () {
 		if (iter == null) return null;
 
 		T payload = iter.payload;
@@ -79,16 +107,28 @@ public class PooledLinkedList<T> {
 		return payload;
 	}
 
-	/** Removs the current list item based on the iterator position. */
+	/** Gets the previous item in the list
+	 * 
+	 * @return the previous item in the list or null if there are no more items */
+	public @Null T previous () {
+		if (iter == null) return null;
+
+		T payload = iter.payload;
+		curr = iter;
+		iter = iter.prev;
+		return payload;
+	}
+
+	/** Removes the current list item based on the iterator position. */
 	public void remove () {
 		if (curr == null) return;
 
 		size--;
-		pool.free(curr);
 
 		Item<T> c = curr;
 		Item<T> n = curr.next;
 		Item<T> p = curr.prev;
+		pool.free(curr);
 		curr = null;
 
 		if (size == 0) {
@@ -113,41 +153,35 @@ public class PooledLinkedList<T> {
 		n.prev = p;
 	}
 
-// public static void main (String[] argv) {
-// PooledLinkedList<Integer> list = new PooledLinkedList<Integer>(10);
-//
-// list.add(1);
-// list.add(2);
-// list.add(3);
-// list.add(4);
-// list.iter();
-// list.next();
-// list.next();
-// list.remove();
-// list.next();
-// list.next();
-// list.remove();
-//
-// list.iter();
-// Integer v = null;
-// while ((v = list.next()) != null)
-// System.out.println(v);
-//
-// list.iter();
-// list.next();
-// list.next();
-// list.remove();
-//
-// list.iter();
-// list.next();
-// list.remove();
-// }
+	/** Removes the tail of the list regardless of iteration status */
+	public @Null T removeLast () {
+		if (tail == null) {
+			return null;
+		}
+
+		T payload = tail.payload;
+
+		size--;
+
+		Item<T> p = tail.prev;
+		pool.free(tail);
+
+		if (size == 0) {
+			head = null;
+			tail = null;
+		} else {
+			tail = p;
+			tail.next = null;
+		}
+
+		return payload;
+	}
 
 	public void clear () {
 		iter();
 		T v = null;
 		while ((v = next()) != null)
 			remove();
-
 	}
+
 }

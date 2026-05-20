@@ -16,28 +16,28 @@
 
 package com.badlogic.gdx.tests;
 
-import java.util.List;
-
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.GL10;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.scenes.scene2d.Actor;
-import com.badlogic.gdx.scenes.scene2d.Cullable;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Align;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
+import com.badlogic.gdx.scenes.scene2d.utils.Cullable;
 import com.badlogic.gdx.tests.utils.GdxTest;
 import com.badlogic.gdx.tests.utils.OrthoCamController;
+import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
 
-/** This is a simple demonstration of how to perform VERY basic culling on hierarchies of stage actors that do not scale or rotate.
- * It is not a general solution as it assumes that actors and groups are only translated (moved, change their x/y coordinates).
- * NOTE: This has been obsoleted by {@link Cullable}.
+/** This is a simple demonstration of how to perform VERY basic culling on hierarchies of stage actors that do not scale or
+ * rotate. It is not a general solution as it assumes that actors and groups are only translated (moved, change their x/y
+ * coordinates). NOTE: This has been obsoleted by {@link Cullable}.
  * 
  * @author mzechner */
 public class SimpleStageCullingTest extends GdxTest {
@@ -53,11 +53,13 @@ public class SimpleStageCullingTest extends GdxTest {
 		boolean visible = false;
 
 		public CullableActor (String name, Texture texture, OrthographicCamera camera) {
-			super(new TextureRegion(texture), Scaling.none, Align.CENTER, name);
+			super(new TextureRegion(texture));
+			setAlign(Align.center);
+			setScaling(Scaling.none);
 			this.camera = camera;
 		}
 
-		public void draw (SpriteBatch batch, float parentAlpha) {
+		public void draw (Batch batch, float parentAlpha) {
 			// if this actor is not within the view of the camera we don't draw it.
 			if (isCulled()) return;
 
@@ -73,25 +75,25 @@ public class SimpleStageCullingTest extends GdxTest {
 			// we start by setting the stage coordinates to this
 			// actors coordinates which are relative to its parent
 			// Group.
-			float stageX = x;
-			float stageY = y;
+			float stageX = getX();
+			float stageY = getY();
 
 			// now we go up the hierarchy and add all the parents'
 			// coordinates to this actors coordinates. Note that
 			// this assumes that neither this actor nor any of its
 			// parents are rotated or scaled!
-			Actor parent = this.parent;
+			Actor parent = this.getParent();
 			while (parent != null) {
-				stageX += parent.x;
-				stageY += parent.y;
-				parent = parent.parent;
+				stageX += parent.getX();
+				stageY += parent.getY();
+				parent = parent.getParent();
 			}
 
 			// now we check if the rectangle of this actor in screen
 			// coordinates is in the rectangle spanned by the camera's
 			// view. This assumes that the camera has no zoom and is
 			// not rotated!
-			actorRect.set(stageX, stageY, width, height);
+			actorRect.set(stageX, stageY, getWidth(), getHeight());
 			camRect.set(camera.position.x - camera.viewportWidth / 2.0f, camera.position.y - camera.viewportHeight / 2.0f,
 				camera.viewportWidth, camera.viewportHeight);
 			visible = camRect.overlaps(actorRect);
@@ -108,7 +110,8 @@ public class SimpleStageCullingTest extends GdxTest {
 	@Override
 	public void create () {
 		// create a stage and a camera controller so we can pan the view.
-		stage = new Stage(480, 320, false);
+		stage = new Stage();
+		;
 		camController = new OrthoCamController((OrthographicCamera)stage.getCamera()); // we know it's an ortho cam at this point!
 		Gdx.input.setInputProcessor(camController);
 
@@ -118,24 +121,24 @@ public class SimpleStageCullingTest extends GdxTest {
 		// populate the stage with some actors and groups.
 		for (int i = 0; i < 5000; i++) {
 			Actor img = new CullableActor("img" + i, texture, (OrthographicCamera)stage.getCamera());
-			img.x = (float)Math.random() * 480 * 10;
-			img.y = (float)Math.random() * 320 * 10;
+			img.setX((float)Math.random() * 480 * 10);
+			img.setY((float)Math.random() * 320 * 10);
 			stage.addActor(img);
 		}
 
 		// we also want to output the number of visible actors, so we need a SpriteBatch and a BitmapFont
 		batch = new SpriteBatch();
-		font = new BitmapFont(Gdx.files.internal("data/arial-15.fnt"), false);
+		font = new BitmapFont(Gdx.files.internal("data/lsans-15.fnt"), false);
 	}
 
 	public void render () {
-		Gdx.gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
+		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		stage.draw();
 
 		// check how many actors are visible.
-		List<Actor> actors = stage.getActors();
+		Array<Actor> actors = stage.getActors();
 		int numVisible = 0;
-		for (int i = 0; i < actors.size(); i++) {
+		for (int i = 0; i < actors.size; i++) {
 			numVisible += ((CullableActor)actors.get(i)).visible ? 1 : 0;
 		}
 
@@ -150,10 +153,5 @@ public class SimpleStageCullingTest extends GdxTest {
 		texture.dispose();
 		batch.dispose();
 		font.dispose();
-	}
-
-	@Override
-	public boolean needsGL20 () {
-		return false;
 	}
 }

@@ -16,18 +16,15 @@
 
 package com.badlogic.gdx.tests;
 
-import java.util.ArrayList;
-
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.GL10;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.graphics.glutils.ImmediateModeRenderer10;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.math.MathUtils;
@@ -52,7 +49,10 @@ import com.badlogic.gdx.physics.box2d.WorldManifold;
 import com.badlogic.gdx.physics.box2d.joints.MouseJoint;
 import com.badlogic.gdx.physics.box2d.joints.MouseJointDef;
 import com.badlogic.gdx.tests.utils.GdxTest;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.TimeUtils;
+
+import java.util.ArrayList;
 
 public class Box2DTest extends GdxTest implements InputProcessor {
 	/** the camera **/
@@ -104,7 +104,7 @@ public class Box2DTest extends GdxTest implements InputProcessor {
 
 		// next we create a SpriteBatch and a font
 		batch = new SpriteBatch();
-		font = new BitmapFont(Gdx.files.internal("data/arial-15.fnt"), false);
+		font = new BitmapFont(Gdx.files.internal("data/lsans-15.fnt"), false);
 		font.setColor(Color.RED);
 		textureRegion = new TextureRegion(new Texture(Gdx.files.internal("data/badlogicsmall.jpg")));
 
@@ -119,6 +119,12 @@ public class Box2DTest extends GdxTest implements InputProcessor {
 		// we instantiate a new World with a proper gravity vector
 		// and tell it to sleep when possible.
 		world = new World(new Vector2(0, -10), true);
+
+		float[] vertices = {-0.07421887f, -0.16276085f, -0.12109375f, -0.22786504f, -0.157552f, -0.7122401f, 0.04296875f,
+			-0.7122401f, 0.110677004f, -0.6419276f, 0.13151026f, -0.49869835f, 0.08984375f, -0.3190109f};
+
+		PolygonShape shape = new PolygonShape();
+		shape.set(vertices);
 
 		// next we create a static ground platform. This platform
 		// is not moveable and will not react to any influences from
@@ -138,7 +144,7 @@ public class Box2DTest extends GdxTest implements InputProcessor {
 		// finally we add a fixture to the body using the polygon
 		// defined above. Note that we have to dispose PolygonShapes
 		// and CircleShapes once they are no longer used. This is the
-		// only time you have to care explicitely for memomry managment.
+		// only time you have to care explicitly for memory management.
 		FixtureDef fixtureDef = new FixtureDef();
 		fixtureDef.shape = groundPoly;
 		fixtureDef.filter.groupIndex = 0;
@@ -148,19 +154,17 @@ public class Box2DTest extends GdxTest implements InputProcessor {
 		// We also create a simple ChainShape we put above our
 		// ground polygon for extra funkyness.
 		ChainShape chainShape = new ChainShape();
-		chainShape.createLoop(new Vector2[] {
-			new Vector2(-10, 10),
-			new Vector2(-10, 5),
-			new Vector2(10, 5),
-			new Vector2(10, 11),
-		});
+		chainShape.createLoop(new Vector2[] {new Vector2(-10, 10), new Vector2(-10, 5), new Vector2(10, 5), new Vector2(10, 11),});
 		BodyDef chainBodyDef = new BodyDef();
 		chainBodyDef.type = BodyType.StaticBody;
 		Body chainBody = world.createBody(chainBodyDef);
 		chainBody.createFixture(chainShape, 0);
 		chainShape.dispose();
-		
+
 		createBoxes();
+
+		Array<Fixture> fixtures = new Array<Fixture>();
+		world.getFixtures(fixtures);
 
 		// You can savely ignore the rest of this method :)
 		world.setContactListener(new ContactListener() {
@@ -238,7 +242,7 @@ public class Box2DTest extends GdxTest implements InputProcessor {
 
 		// next we clear the color buffer and set the camera
 		// matrices
-		Gdx.gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
+		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		camera.update();
 
 		// next we render the ground body
@@ -300,6 +304,7 @@ public class Box2DTest extends GdxTest implements InputProcessor {
 	}
 
 	Matrix4 transform = new Matrix4();
+
 	private void renderBox (Body body, float halfWidth, float halfHeight) {
 		// get the bodies center and angle in world coordinates
 		Vector2 pos = body.getWorldCenter();
@@ -310,12 +315,12 @@ public class Box2DTest extends GdxTest implements InputProcessor {
 		transform.rotate(0, 0, 1, (float)Math.toDegrees(angle));
 
 		// render the box
-		renderer.begin(ShapeType.Rectangle);
+		renderer.begin(ShapeType.Line);
 		renderer.setTransformMatrix(transform);
 		renderer.setColor(1, 1, 1, 1);
 		renderer.rect(-halfWidth, -halfHeight, halfWidth * 2, halfHeight * 2);
 		renderer.end();
-	}		
+	}
 
 	/** we instantiate this vector and the callback here so we don't irritate the GC **/
 	Vector3 testPoint = new Vector3();
@@ -401,10 +406,5 @@ public class Box2DTest extends GdxTest implements InputProcessor {
 		debugRenderer.dispose();
 		font.dispose();
 		textureRegion.getTexture().dispose();
-	}
-
-	@Override
-	public boolean needsGL20 () {
-		return false;
 	}
 }

@@ -24,7 +24,8 @@ package java.nio;
  * <ul>
  * <li>{@link #allocate(int) Allocate} a new short array and create a buffer based on it;</li>
  * <li>{@link #wrap(short[]) Wrap} an existing short array to create a new buffer;</li>
- * <li>Use {@link java.nio.ByteBuffer#asShortBuffer() ByteBuffer.asShortBuffer} to create a short buffer based on a byte buffer.</li>
+ * <li>Use {@link java.nio.ByteBuffer#asShortBuffer() ByteBuffer.asShortBuffer} to create a short buffer based on a byte
+ * buffer.</li>
  * </ul>
  * 
  * @since Android 1.0 */
@@ -226,8 +227,8 @@ public abstract class ShortBuffer extends Buffer implements Comparable<ShortBuff
 		return get(dest, 0, dest.length);
 	}
 
-	/** Reads shorts from the current position into the specified short array, starting from the specified offset, and increases the
-	 * position by the number of shorts read.
+	/** Reads shorts from the current position into the specified short array, starting from the specified offset, and increases
+	 * the position by the number of shorts read.
 	 * 
 	 * @param dest the target short array.
 	 * @param off the offset of the short array, must not be negative and not greater than {@code dest.length}.
@@ -323,7 +324,8 @@ public abstract class ShortBuffer extends Buffer implements Comparable<ShortBuff
 	 * @since Android 1.0 */
 	public abstract ShortBuffer put (short s);
 
-	/** Writes shorts from the given short array to the current position and increases the position by the number of shorts written.
+	/** Writes shorts from the given short array to the current position and increases the position by the number of shorts
+	 * written.
 	 * <p>
 	 * Calling this method has the same effect as {@code put(src, 0, src.length)}.
 	 * </p>
@@ -415,14 +417,14 @@ public abstract class ShortBuffer extends Buffer implements Comparable<ShortBuff
 	 * @return a string representing the state of this short buffer.
 	 * @since Android 1.0 */
 	public String toString () {
-		StringBuffer buf = new StringBuffer();
-		buf.append(getClass().getName());
-		buf.append(", status: capacity="); //$NON-NLS-1$
-		buf.append(capacity());
-		buf.append(" position="); //$NON-NLS-1$
-		buf.append(position());
-		buf.append(" limit="); //$NON-NLS-1$
-		buf.append(limit());
-		return buf.toString();
+		StringBuilder sb = new StringBuilder();
+		sb.append(getClass().getName());
+		sb.append(", status: capacity="); //$NON-NLS-1$
+		sb.append(capacity());
+		sb.append(" position="); //$NON-NLS-1$
+		sb.append(position());
+		sb.append(" limit="); //$NON-NLS-1$
+		sb.append(limit());
+		return sb.toString();
 	}
 }

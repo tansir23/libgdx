@@ -1,11 +1,30 @@
+/*******************************************************************************
+ * Copyright 2011 See AUTHORS file.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 
 package com.badlogic.gdx.utils;
 
-/** @author Nathan Sweet */
-public class BinaryHeap<T> {
-	public int size = 0;
+import java.util.Arrays;
 
-	private Node<T>[] nodes;
+/** A binary heap that stores nodes which each have a float value and are sorted either lowest first or highest first. The
+ * {@link Node} class can be extended to store additional information.
+ * @author Nathan Sweet */
+public class BinaryHeap<T extends BinaryHeap.Node> {
+	public int size;
+
+	private Node[] nodes;
 	private final boolean isMaxHeap;
 
 	public BinaryHeap () {
@@ -17,7 +36,9 @@ public class BinaryHeap<T> {
 		nodes = new Node[capacity];
 	}
 
-	public Node add (Node node) {
+	/** Adds the node to the heap using its current value. The node should not already be in the heap.
+	 * @return The specified node. */
+	public T add (T node) {
 		// Expand if necessary.
 		if (size == nodes.length) {
 			Node[] newNodes = new Node[size << 1];
@@ -31,16 +52,79 @@ public class BinaryHeap<T> {
 		return node;
 	}
 
-	public Node pop () {
-		Node[] nodes = this.nodes;
-		Node popped = nodes[0];
-		nodes[0] = nodes[--size];
-		nodes[size] = null;
-		if (size > 0) down(0);
-		return popped;
+	/** Sets the node's value and adds it to the heap. The node should not already be in the heap.
+	 * @return The specified node. */
+	public T add (T node, float value) {
+		node.value = value;
+		return add(node);
 	}
 
-	public void setValue (Node node, float value) {
+	/** Returns true if the heap contains the specified node.
+	 * @param identity If true, == comparison will be used. If false, .equals() comparison will be used. */
+	public boolean contains (T node, boolean identity) {
+		if (node == null) throw new IllegalArgumentException("node cannot be null.");
+		if (identity) {
+			for (Node n : nodes)
+				if (n == node) return true;
+		} else {
+			for (Node other : nodes)
+				if (other.equals(node)) return true;
+		}
+		return false;
+	}
+
+	/** Returns the first item in the heap. This is the item with the lowest value (or highest value if this heap is configured as
+	 * a max heap). */
+	public T peek () {
+		if (size == 0) throw new IllegalStateException("The heap is empty.");
+		return (T)nodes[0];
+	}
+
+	/** Removes the first item in the heap and returns it. This is the item with the lowest value (or highest value if this heap is
+	 * configured as a max heap). */
+	public T pop () {
+		Node removed = nodes[0];
+		if (--size > 0) {
+			nodes[0] = nodes[size];
+			nodes[size] = null;
+			down(0);
+		} else
+			nodes[0] = null;
+		return (T)removed;
+	}
+
+	/** @return The specified node. */
+	public T remove (T node) {
+		if (--size > 0) {
+			Node moved = nodes[size];
+			nodes[size] = null;
+			nodes[node.index] = moved;
+			if (moved.value < node.value ^ isMaxHeap)
+				up(node.index);
+			else
+				down(node.index);
+		} else
+			nodes[0] = null;
+		return node;
+	}
+
+	/** Returns true if the heap has one or more items. */
+	public boolean notEmpty () {
+		return size > 0;
+	}
+
+	/** Returns true if the heap is empty. */
+	public boolean isEmpty () {
+		return size == 0;
+	}
+
+	public void clear () {
+		Arrays.fill(nodes, 0, size, null);
+		size = 0;
+	}
+
+	/** Changes the value of the node, which should already be in the heap. */
+	public void setValue (T node, float value) {
 		float oldValue = node.value;
 		node.value = value;
 		if (value < oldValue ^ isMaxHeap)
@@ -79,7 +163,7 @@ public class BinaryHeap<T> {
 			if (leftIndex >= size) break;
 			int rightIndex = leftIndex + 1;
 
-			// Always have a left child.
+			// Always has a left child.
 			Node leftNode = nodes[leftIndex];
 			float leftValue = leftNode.value;
 
@@ -88,7 +172,7 @@ public class BinaryHeap<T> {
 			float rightValue;
 			if (rightIndex >= size) {
 				rightNode = null;
-				rightValue = isMaxHeap ? Float.MIN_VALUE : Float.MAX_VALUE;
+				rightValue = isMaxHeap ? -Float.MAX_VALUE : Float.MAX_VALUE;
 			} else {
 				rightNode = nodes[rightIndex];
 				rightValue = rightNode.value;
@@ -103,7 +187,7 @@ public class BinaryHeap<T> {
 			} else {
 				if (rightValue == value || (rightValue > value ^ isMaxHeap)) break;
 				nodes[index] = rightNode;
-				rightNode.index = index;
+				if (rightNode != null) rightNode.index = index;
 				index = rightIndex;
 			}
 		}
@@ -112,27 +196,56 @@ public class BinaryHeap<T> {
 		node.index = index;
 	}
 
+	public boolean equals (Object obj) {
+		if (!(obj instanceof BinaryHeap)) return false;
+		BinaryHeap other = (BinaryHeap)obj;
+		if (other.size != size) return false;
+		Node[] nodes1 = this.nodes, nodes2 = other.nodes;
+		for (int i = 0, n = size; i < n; i++)
+			if (nodes1[i].value != nodes2[i].value) return false;
+		return true;
+	}
+
+	public int hashCode () {
+		int h = 1;
+		Node[] nodes = this.nodes;
+		for (int i = 0, n = size; i < n; i++)
+			h = h * 31 + Float.floatToIntBits(nodes[i].value);
+		return h;
+	}
+
 	public String toString () {
 		if (size == 0) return "[]";
-		Object[] nodes = this.nodes;
+		Node[] nodes = this.nodes;
 		StringBuilder buffer = new StringBuilder(32);
 		buffer.append('[');
-		buffer.append(nodes[0]);
+		buffer.append(nodes[0].value);
 		for (int i = 1; i < size; i++) {
 			buffer.append(", ");
-			buffer.append(nodes[i]);
+			buffer.append(nodes[i].value);
 		}
 		buffer.append(']');
 		return buffer.toString();
 	}
 
-	/** @author Nathan Sweet */
-	static public class Node<T> {
+	/** A binary heap node.
+	 * @author Nathan Sweet */
+	static public class Node {
 		float value;
 		int index;
 
+		/** @param value The initial value for the node. To change the value, use {@link BinaryHeap#add(Node, float)} if the node is
+		 *           not in the heap, or {@link BinaryHeap#setValue(Node, float)} if the node is in the heap. */
 		public Node (float value) {
 			this.value = value;
+		}
+
+		public float getValue () {
+			return value;
+		}
+
+		public String toString () {
+			return Float.toString(value);
 		}
 	}
 }

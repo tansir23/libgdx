@@ -17,99 +17,144 @@
 package com.badlogic.gdx.tests;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.GL10;
+import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Button;
 import com.badlogic.gdx.scenes.scene2d.ui.Button.ButtonStyle;
 import com.badlogic.gdx.scenes.scene2d.ui.CheckBox;
-import com.badlogic.gdx.scenes.scene2d.ui.CheckBox.CheckBoxStyle;
-import com.badlogic.gdx.scenes.scene2d.ui.FlickScrollPane;
+import com.badlogic.gdx.scenes.scene2d.ui.Dialog;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
+import com.badlogic.gdx.scenes.scene2d.ui.ImageButton;
+import com.badlogic.gdx.scenes.scene2d.ui.ImageButton.ImageButtonStyle;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
-import com.badlogic.gdx.scenes.scene2d.ui.Label.LabelStyle;
 import com.badlogic.gdx.scenes.scene2d.ui.List;
-import com.badlogic.gdx.scenes.scene2d.ui.List.ListStyle;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
-import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane.ScrollPaneStyle;
 import com.badlogic.gdx.scenes.scene2d.ui.SelectBox;
-import com.badlogic.gdx.scenes.scene2d.ui.SelectBox.SelectBoxStyle;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Slider;
-import com.badlogic.gdx.scenes.scene2d.ui.Slider.SliderStyle;
-import com.badlogic.gdx.scenes.scene2d.ui.Slider.ValueChangedListener;
 import com.badlogic.gdx.scenes.scene2d.ui.SplitPane;
-import com.badlogic.gdx.scenes.scene2d.ui.SplitPane.SplitPaneStyle;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
-import com.badlogic.gdx.scenes.scene2d.ui.TextButton.TextButtonStyle;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField.TextFieldListener;
-import com.badlogic.gdx.scenes.scene2d.ui.TextField.TextFieldStyle;
+import com.badlogic.gdx.scenes.scene2d.ui.TextTooltip;
+import com.badlogic.gdx.scenes.scene2d.ui.Tooltip;
 import com.badlogic.gdx.scenes.scene2d.ui.Window;
-import com.badlogic.gdx.scenes.scene2d.ui.Window.WindowStyle;
-import com.badlogic.gdx.scenes.scene2d.ui.tablelayout.Table;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.tests.utils.GdxTest;
+import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.utils.ScreenUtils;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 public class UITest extends GdxTest {
-	String[] listEntries = {"This is a list entry", "And another one", "The meaning of life", "Is hard to come by",
-		"This is a list entry", "And another one", "The meaning of life", "Is hard to come by", "This is a list entry",
-		"And another one", "The meaning of life", "Is hard to come by", "This is a list entry", "And another one",
-		"The meaning of life", "Is hard to come by", "This is a list entry", "And another one", "The meaning of life",
-		"Is hard to come by"};
+	Object[] listEntries = {"This is a list entry1", "And another one1", "The meaning of life1", "Is hard to come by1",
+		"This is a list entry2", "And another one2", "The meaning of life2", "Is hard to come by2", "This is a list entry3",
+		"And another one3", "The meaning of life3", "Is hard to come by3", "This is a list entry4", "And another one4",
+		"The meaning of life4", "Is hard to come by4", "This is a list entry5", "And another one5", "The meaning of life5",
+		"Is hard to come by5"};
 
 	Skin skin;
 	Stage stage;
-	SpriteBatch batch;
 	Texture texture1;
 	Texture texture2;
-	Actor root;
+	Label fpsLabel;
 
 	@Override
 	public void create () {
-		batch = new SpriteBatch();
-		skin = new Skin(Gdx.files.internal("data/uiskin.json"), Gdx.files.internal("data/uiskin.png"));
+		skin = new Skin(Gdx.files.internal("data/uiskin.json"));
 		texture1 = new Texture(Gdx.files.internal("data/badlogicsmall.jpg"));
 		texture2 = new Texture(Gdx.files.internal("data/badlogic.jpg"));
 		TextureRegion image = new TextureRegion(texture1);
+		TextureRegion imageFlipped = new TextureRegion(image);
+		imageFlipped.flip(true, true);
 		TextureRegion image2 = new TextureRegion(texture2);
-		stage = new Stage(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), false);
+		// stage = new Stage(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), false, new PolygonSpriteBatch());
+		stage = new Stage(new ScreenViewport());
 		Gdx.input.setInputProcessor(stage);
 
-		// Group.debug = true;
+		// stage.setDebugAll(true);
 
-		final Button button = new TextButton("Single", skin.getStyle(TextButtonStyle.class), "button-sl");
-		final Button buttonMulti = new TextButton("Multi\nLine\nToggle", skin.getStyle("toggle", TextButtonStyle.class),
-			"button-ml-tgl");
-		final Button imgButton = new Button(new Image(image), skin.getStyle(ButtonStyle.class));
-		final Button imgToggleButton = new Button(new Image(image), skin.getStyle("toggle", ButtonStyle.class));
-		final CheckBox checkBox = new CheckBox("Check me", skin.getStyle(CheckBoxStyle.class), "checkbox");
-		final Slider slider = new Slider(0, 10, 1, skin.getStyle(SliderStyle.class), "slider");
-		final TextField textfield = new TextField("", "Click here!", skin.getStyle(TextFieldStyle.class), "textfield");
-		final SelectBox dropdown = new SelectBox(new String[] {"Android", "Windows", "Linux", "OSX"},
-			skin.getStyle(SelectBoxStyle.class), "combo");
-		final Image imageActor = new Image(image2);
-		final FlickScrollPane scrollPane = new FlickScrollPane(imageActor, "flickscroll");
-		final List list = new List(listEntries, skin.getStyle(ListStyle.class), "list");
-		final ScrollPane scrollPane2 = new ScrollPane(list, skin.getStyle(ScrollPaneStyle.class), "scroll");
-		final SplitPane splitPane = new SplitPane(scrollPane, scrollPane2, false, skin.getStyle("default-horizontal",
-			SplitPaneStyle.class), "split");
-		final Label fpsLabel = new Label("fps:", skin.getStyle(LabelStyle.class), "label");
+		ImageButtonStyle style = new ImageButtonStyle(skin.get(ButtonStyle.class));
+		style.imageUp = new TextureRegionDrawable(image);
+		style.imageDown = new TextureRegionDrawable(imageFlipped);
+		ImageButton iconButton = new ImageButton(style);
+
+		Button buttonMulti = new TextButton("Multi\nLine\nToggle", skin, "toggle");
+		Button imgButton = new Button(new Image(image), skin);
+		Button imgToggleButton = new Button(new Image(image), skin, "toggle");
+
+		Label myLabel = new Label("this is some text.", skin);
+		myLabel.setWrap(true);
+
+		Table t = new Table();
+		t.row();
+		t.add(myLabel);
+
+		t.layout();
+
+		final CheckBox checkBox = new CheckBox(" Continuous rendering", skin);
+		checkBox.setChecked(true);
+		final Slider slider = new Slider(0, 10, 1, false, skin);
+		slider.setAnimateDuration(0.3f);
+		TextField textfield = new TextField("", skin);
+		textfield.setMessageText("Click here!");
+		textfield.setAlignment(Align.center);
+		final SelectBox selectBox = new SelectBox(skin);
+		selectBox.setAlignment(Align.right);
+		selectBox.getList().setAlignment(Align.right);
+		selectBox.getStyle().listStyle.selection.setRightWidth(10);
+		selectBox.getStyle().listStyle.selection.setLeftWidth(20);
+		selectBox.addListener(new ChangeListener() {
+			public void changed (ChangeEvent event, Actor actor) {
+				System.out.println(selectBox.getSelected());
+			}
+		});
+		selectBox.setItems("Android1", "Windows1 long text in item", "Linux1", "OSX1", "Android2", "Windows2", "Linux2", "OSX2",
+			"Android3", "Windows3", "Linux3", "OSX3", "Android4", "Windows4", "Linux4", "OSX4", "Android5", "Windows5", "Linux5",
+			"OSX5", "Android6", "Windows6", "Linux6", "OSX6", "Android7", "Windows7", "Linux7", "OSX7");
+		selectBox.setSelected("Linux6");
+		Image imageActor = new Image(image2);
+		ScrollPane scrollPane = new ScrollPane(imageActor);
+		List list = new List(skin);
+		list.setItems(listEntries);
+		list.getSelection().setMultiple(true);
+		list.getSelection().setRequired(false);
+		// list.getSelection().setToggle(true);
+		ScrollPane scrollPane2 = new ScrollPane(list, skin);
+		scrollPane2.setFlickScroll(false);
+		Label minSizeLabel = new Label("minWidth cell", skin); // demos SplitPane respecting widget's minWidth
+		Table rightSideTable = new Table(skin);
+		rightSideTable.add(minSizeLabel).growX().row();
+		rightSideTable.add(scrollPane2).grow();
+		SplitPane splitPane = new SplitPane(scrollPane, rightSideTable, false, skin, "default-horizontal");
+		fpsLabel = new Label("fps:", skin);
 
 		// configures an example of a TextField in password mode.
 		final Label passwordLabel = new Label("Textfield in password mode: ", skin);
-		final TextField passwordTextField = new TextField("", "password", skin);
+		final TextField passwordTextField = new TextField("", skin);
+		passwordTextField.setMessageText("password");
 		passwordTextField.setPasswordCharacter('*');
 		passwordTextField.setPasswordMode(true);
 
+		buttonMulti.addListener(new TextTooltip(
+			"This is a tooltip! This is a tooltip! This is a tooltip! This is a tooltip! This is a tooltip! This is a tooltip!",
+			skin));
+		Table tooltipTable = new Table(skin);
+		tooltipTable.pad(10).background("default-round");
+		tooltipTable.add(new TextButton("Fancy tooltip!", skin));
+		imgButton.addListener(new Tooltip(tooltipTable));
+
 		// window.debug();
-		Window window = new Window("Dialog", skin.getStyle(WindowStyle.class), "window");
-		window.x = window.y = 0;
+		Window window = new Window("Dialog", skin);
+		window.getTitleTable().add(new TextButton("X", skin)).height(window.getPadTop());
+		window.setPosition(0, 0);
 		window.defaults().spaceBottom(10);
 		window.row().fill().expandX();
-		window.add(button).fill(0f, 0f);
+		window.add(iconButton);
 		window.add(buttonMulti);
 		window.add(imgButton);
 		window.add(imgToggleButton);
@@ -117,13 +162,13 @@ public class UITest extends GdxTest {
 		window.add(checkBox);
 		window.add(slider).minWidth(100).fillX().colspan(3);
 		window.row();
-		window.add(dropdown);
-		window.add(textfield).minWidth(100).expandX().fillX().colspan(3);
+		window.add(selectBox).maxWidth(100);
+		window.add(textfield).minWidth(100).growX().colspan(3);
 		window.row();
-		window.add(splitPane).fill().expand().colspan(4).maxHeight(200);
+		window.add(splitPane).grow().colspan(4).maxHeight(200);
 		window.row();
 		window.add(passwordLabel).colspan(2);
-		window.add(passwordTextField).minWidth(100).expandX().fillX().colspan(2);
+		window.add(passwordTextField).minWidth(100).growX().colspan(2);
 		window.row();
 		window.add(fpsLabel).colspan(4);
 		window.pack();
@@ -133,32 +178,47 @@ public class UITest extends GdxTest {
 
 		textfield.setTextFieldListener(new TextFieldListener() {
 			public void keyTyped (TextField textField, char key) {
-				if (key == '\n') textField.getOnscreenKeyboard().show(false);
+				if (key == '\n') textField.getOnscreenKeyboard().close();
 			}
 		});
 
-		slider.setValueChangedListener(new ValueChangedListener() {
-			public void changed (Slider slider, float value) {
-				Gdx.app.log("UITest", "slider: " + value);
+		slider.addListener(new ChangeListener() {
+			public void changed (ChangeEvent event, Actor actor) {
+				Gdx.app.log("UITest", "slider: " + slider.getValue());
+			}
+		});
+
+		iconButton.addListener(new ChangeListener() {
+			public void changed (ChangeEvent event, Actor actor) {
+				new Dialog("Some Dialog", skin, "dialog") {
+					protected void result (Object object) {
+						System.out.println("Chosen: " + object);
+					}
+				}.text("Are you enjoying this demo?").button("Yes", true).button("No", false).key(Keys.ENTER, true)
+					.key(Keys.ESCAPE, false).show(stage);
+			}
+		});
+
+		checkBox.addListener(new ChangeListener() {
+			public void changed (ChangeEvent event, Actor actor) {
+				Gdx.graphics.setContinuousRendering(checkBox.isChecked());
 			}
 		});
 	}
 
 	@Override
 	public void render () {
-		Gdx.gl.glClearColor(0.2f, 0.2f, 0.2f, 1);
-		Gdx.gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
+		ScreenUtils.clear(0.2f, 0.2f, 0.2f, 1);
 
-		((Label)stage.findActor("label")).setText("fps: " + Gdx.graphics.getFramesPerSecond());
+		fpsLabel.setText("fps: " + Gdx.graphics.getFramesPerSecond());
 
 		stage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
 		stage.draw();
-		Table.drawDebug(stage);
 	}
 
 	@Override
 	public void resize (int width, int height) {
-		stage.setViewport(width, height, false);
+		stage.getViewport().update(width, height, true);
 	}
 
 	@Override

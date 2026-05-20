@@ -16,15 +16,17 @@
 
 package com.badlogic.gdx;
 
-/** <p>
+/**
+ * <p>
  * An {@link ApplicationListener} that delegates to a {@link Screen}. This allows an application to easily have multiple screens.
  * </p>
  * <p>
  * Screens are not disposed automatically. You must handle whether you want to keep screens around or dispose of them when another
  * screen is set.
- * </p> */
+ * </p>
+ */
 public abstract class Game implements ApplicationListener {
-	private Screen screen;
+	protected Screen screen;
 
 	@Override
 	public void dispose () {
@@ -52,12 +54,15 @@ public abstract class Game implements ApplicationListener {
 	}
 
 	/** Sets the current screen. {@link Screen#hide()} is called on any old screen, and {@link Screen#show()} is called on the new
-	 * screen. */
+	 * screen, if any.
+	 * @param screen may be {@code null} */
 	public void setScreen (Screen screen) {
 		if (this.screen != null) this.screen.hide();
 		this.screen = screen;
-		screen.show();
-		screen.resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+		if (this.screen != null) {
+			this.screen.show();
+			this.screen.resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+		}
 	}
 
 	/** @return the currently active {@link Screen}. */

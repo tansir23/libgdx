@@ -31,7 +31,7 @@ package com.badlogic.gdx.tests.box2d;
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.graphics.GL10;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -87,7 +87,7 @@ public abstract class Box2DTest implements ApplicationListener, InputProcessor {
 
 		startTime = TimeUtils.nanoTime();
 		// clear the screen and setup the projection matrix
-		Gdx.gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
+		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		camera.update();
 
 		// render the world using the debug renderer
@@ -126,7 +126,7 @@ public abstract class Box2DTest implements ApplicationListener, InputProcessor {
 		createWorld(world);
 
 		batch = new SpriteBatch();
-		font = new BitmapFont(Gdx.files.internal("data/arial-15.fnt"), false);
+		font = new BitmapFont(Gdx.files.internal("data/lsans-15.fnt"), false);
 	}
 
 	@Override
@@ -227,12 +227,17 @@ public abstract class Box2DTest implements ApplicationListener, InputProcessor {
 	}
 
 	@Override
-	public boolean touchMoved (int x, int y) {
+	public boolean touchCancelled (int x, int y, int pointer, int button) {
+		return touchUp(x, y, pointer, button);
+	}
+
+	@Override
+	public boolean mouseMoved (int x, int y) {
 		return false;
 	}
 
 	@Override
-	public boolean scrolled (int amount) {
+	public boolean scrolled (float amountX, float amountY) {
 		return false;
 	}
 

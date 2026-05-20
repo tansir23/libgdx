@@ -16,11 +16,11 @@
 
 package com.badlogic.gdx.scenes.scene2d.ui;
 
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Group;
-import com.badlogic.gdx.scenes.scene2d.Layout;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.utils.Layout;
 
 /** An {@link Actor} that participates in layout and provides a minimum, preferred, and maximum size.
  * <p>
@@ -32,18 +32,10 @@ import com.badlogic.gdx.scenes.scene2d.Layout;
  * {@link #invalidate()} or {@link #invalidateHierarchy()} as needed.
  * @author mzechner
  * @author Nathan Sweet */
-public abstract class Widget extends Actor implements Layout {
+public class Widget extends Actor implements Layout {
 	private boolean needsLayout = true;
 	private boolean fillParent;
-
-	/** Creates a new widget without a name. */
-	public Widget () {
-		super(null);
-	}
-
-	public Widget (String name) {
-		super(name);
-	}
+	private boolean layoutEnabled = true;
 
 	public float getMinWidth () {
 		return getPrefWidth();
@@ -69,25 +61,26 @@ public abstract class Widget extends Actor implements Layout {
 		return 0;
 	}
 
-	public void invalidate () {
-		needsLayout = true;
+	public void setLayoutEnabled (boolean enabled) {
+		layoutEnabled = enabled;
+		if (enabled) invalidateHierarchy();
 	}
 
 	public void validate () {
+		if (!layoutEnabled) return;
+
+		Group parent = getParent();
 		if (fillParent && parent != null) {
 			float parentWidth, parentHeight;
+			Stage stage = getStage();
 			if (stage != null && parent == stage.getRoot()) {
-				parentWidth = stage.width();
-				parentHeight = stage.height();
+				parentWidth = stage.getWidth();
+				parentHeight = stage.getHeight();
 			} else {
-				parentWidth = parent.width;
-				parentHeight = parent.height;
+				parentWidth = parent.getWidth();
+				parentHeight = parent.getHeight();
 			}
-			if (width != parentWidth || height != parentHeight) {
-				width = parentWidth;
-				height = parentHeight;
-				invalidate();
-			}
+			setSize(parentWidth, parentHeight);
 		}
 
 		if (!needsLayout) return;
@@ -100,20 +93,24 @@ public abstract class Widget extends Actor implements Layout {
 		return needsLayout;
 	}
 
+	public void invalidate () {
+		needsLayout = true;
+	}
+
 	public void invalidateHierarchy () {
+		if (!layoutEnabled) return;
 		invalidate();
+		Group parent = getParent();
 		if (parent instanceof Layout) ((Layout)parent).invalidateHierarchy();
 	}
 
+	protected void sizeChanged () {
+		invalidate();
+	}
+
 	public void pack () {
-		float newWidth = getPrefWidth();
-		float newHeight = getPrefHeight();
-		if (newWidth != width || newHeight != height) {
-			width = newWidth;
-			height = newHeight;
-			invalidate();
-			validate();
-		}
+		setSize(getPrefWidth(), getPrefHeight());
+		validate();
 	}
 
 	public void setFillParent (boolean fillParent) {
@@ -121,39 +118,10 @@ public abstract class Widget extends Actor implements Layout {
 	}
 
 	/** If this method is overridden, the super method or {@link #validate()} should be called to ensure the widget is laid out. */
-	public void draw (SpriteBatch batch, float parentAlpha) {
+	public void draw (Batch batch, float parentAlpha) {
 		validate();
 	}
 
-	public Actor hit (float x, float y) {
-		return x > 0 && x < width && y > 0 && y < height ? this : null;
-	}
-
 	public void layout () {
-	}
-
-	public boolean touchDown (float x, float y, int pointer) {
-		return false;
-	}
-
-	public void touchUp (float x, float y, int pointer) {
-	}
-
-	public void touchDragged (float x, float y, int pointer) {
-	}
-
-	/** This modifies the specified point in the actor's coordinates to be in the stage's coordinates. Note this method will ONLY
-	 * work properly for screen aligned, unrotated, unscaled actors! */
-	static public void toScreenCoordinates (Actor actor, Vector2 point) {
-		point.x += actor.x;
-		point.y += actor.y;
-		Actor parent = actor.parent;
-		while (parent != null) {
-			if (parent instanceof Group) {
-				point.x += parent.x;
-				point.y += parent.y;
-			}
-			parent = parent.parent;
-		}
 	}
 }

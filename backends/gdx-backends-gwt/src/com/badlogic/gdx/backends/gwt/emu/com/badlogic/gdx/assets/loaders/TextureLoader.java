@@ -38,7 +38,7 @@ public class TextureLoader extends AsynchronousAssetLoader<Texture, TextureLoade
 	}
 
 	@Override
-	public void loadAsync (AssetManager manager, String fileName, TextureParameter parameter) {
+	public void loadAsync (AssetManager manager, String fileName, FileHandle fileHandle, TextureParameter parameter) {
 		if (parameter == null || (parameter != null && parameter.textureData == null)) {
 			Pixmap pixmap = null;
 			Format format = null;
@@ -56,13 +56,13 @@ public class TextureLoader extends AsynchronousAssetLoader<Texture, TextureLoade
 			data = new FileTextureData(handle, pixmap, format, genMipMaps);
 		} else {
 			data = parameter.textureData;
-			if(!data.isPrepared()) data.prepare();
+			if (!data.isPrepared()) data.prepare();
 			texture = parameter.texture;
 		}
 	}
 
 	@Override
-	public Texture loadSync (AssetManager manager, String fileName, TextureParameter parameter) {
+	public Texture loadSync (AssetManager manager, String fileName, FileHandle fileHandle, TextureParameter parameter) {
 		Texture texture = this.texture;
 		if (texture != null) {
 			texture.load(data);
@@ -77,7 +77,7 @@ public class TextureLoader extends AsynchronousAssetLoader<Texture, TextureLoade
 	}
 
 	@Override
-	public Array<AssetDescriptor> getDependencies (String fileName, TextureParameter parameter) {
+	public Array<AssetDescriptor> getDependencies (String fileName, FileHandle fileHandle, TextureParameter parameter) {
 		return null;
 	}
 

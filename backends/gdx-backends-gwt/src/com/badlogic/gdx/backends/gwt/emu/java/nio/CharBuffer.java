@@ -426,8 +426,8 @@ public abstract class CharBuffer extends Buffer implements Comparable<CharBuffer
 		return this;
 	}
 
-	/** Writes all the remaining chars of the {@code src} char buffer to this buffer's current position, and increases both buffers'
-	 * position by the number of chars copied.
+	/** Writes all the remaining chars of the {@code src} char buffer to this buffer's current position, and increases both
+	 * buffers' position by the number of chars copied.
 	 * 
 	 * @param src the source char buffer.
 	 * @return this buffer.
@@ -539,11 +539,11 @@ public abstract class CharBuffer extends Buffer implements Comparable<CharBuffer
 	 * @return a string representing the current remaining chars of this buffer.
 	 * @since Android 1.0 */
 	public String toString () {
-		StringBuffer strbuf = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 		for (int i = position; i < limit; i++) {
-			strbuf.append(get(i));
+			sb.append(get(i));
 		}
-		return strbuf.toString();
+		return sb.toString();
 	}
 
 	/** Writes the given char to the current position and increases the position by 1.

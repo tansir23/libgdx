@@ -10,41 +10,34 @@
 
 package java.io;
 
-import avian.Utf8;
+import com.badlogic.gdx.utils.Utf8Decoder;
 
 public class InputStreamReader extends Reader {
-  private final InputStream in;
+	private final InputStream in;
 
-  public InputStreamReader(InputStream in) {
-    this.in = in;
-  }
+	private final Utf8Decoder utf8Decoder;
 
-  public InputStreamReader(InputStream in, String encoding)
-    throws UnsupportedEncodingException
-  {
-    this(in);
+	public InputStreamReader (InputStream in) {
+		this.in = in;
+		this.utf8Decoder = new Utf8Decoder();
+	}
 
-    // FIXME this is bad, but some APIs seem to use "ISO-8859-1", fuckers...
-//    if (! encoding.equals("UTF-8")) {
-//      throw new UnsupportedEncodingException(encoding);
-//    }    
-  }
+	public InputStreamReader (InputStream in, String encoding) throws UnsupportedEncodingException {
+		this(in);
 
-  
-  public int read(char[] b, int offset, int length) throws IOException {
-    byte[] buffer = new byte[length];
-    int c = in.read(buffer);
+		// FIXME this is bad, but some APIs seem to use "ISO-8859-1", fuckers...
+// if (! encoding.equals("UTF-8")) {
+// throw new UnsupportedEncodingException(encoding);
+// }
+	}
 
-    if (c <= 0) return c;
+	public int read (char[] b, int offset, int length) throws IOException {
+		byte[] buffer = new byte[length];
+		int c = in.read(buffer);
+		return c <= 0 ? c : utf8Decoder.decode(buffer, 0, c, b, offset);
+	}
 
-    char[] buffer16 = Utf8.decode16(buffer, 0, c);
-
-    System.arraycopy(buffer16, 0, b, offset, buffer16.length);
-
-    return buffer16.length;
-  }
-
-  public void close() throws IOException {
-    in.close();
-  }
+	public void close () throws IOException {
+		in.close();
+	}
 }

@@ -35,6 +35,11 @@ public class Plane implements Serializable {
 	public final Vector3 normal = new Vector3();
 	public float d = 0;
 
+	/** Constructs a new plane with all values set to 0 */
+	public Plane () {
+
+	}
+
 	/** Constructs a new plane based on the normal and distance to the origin.
 	 * 
 	 * @param normal The plane normal
@@ -70,11 +75,8 @@ public class Plane implements Serializable {
 	 * @param point2
 	 * @param point3 */
 	public void set (Vector3 point1, Vector3 point2, Vector3 point3) {
-		Vector3 l = point1.tmp().sub(point2);
-		Vector3 r = point2.tmp2().sub(point3);
-		Vector3 nor = l.crs(r).nor();
-		normal.set(nor);
-		d = -point1.dot(nor);
+		normal.set(point1).sub(point2).crs(point2.x - point3.x, point2.y - point3.y, point2.z - point3.z).nor();
+		d = -point1.dot(normal);
 	}
 
 	/** Sets the plane normal and distance
@@ -111,11 +113,11 @@ public class Plane implements Serializable {
 		else
 			return PlaneSide.Front;
 	}
-	
+
 	/** Returns on which side the given point lies relative to the plane and its normal. PlaneSide.Front refers to the side the
 	 * plane normal points to.
 	 * 
-	 * @param x 
+	 * @param x
 	 * @param y
 	 * @param z
 	 * @return The side the point lies relative to the plane */
@@ -158,10 +160,10 @@ public class Plane implements Serializable {
 		this.normal.set(normal);
 		d = -point.dot(normal);
 	}
-	
-	public void set(float pointX, float pointY, float pointZ, float norX, float norY, float norZ) {
+
+	public void set (float pointX, float pointY, float pointZ, float norX, float norY, float norZ) {
 		this.normal.set(norX, norY, norZ);
-		d = -(pointX * norX +  pointY * norY + pointZ * norZ);
+		d = -(pointX * norX + pointY * norY + pointZ * norZ);
 	}
 
 	/** Sets this plane from the given plane

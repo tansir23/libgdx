@@ -20,16 +20,27 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Buttons;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.input.RemoteInput;
 import com.badlogic.gdx.tests.utils.GdxTest;
 
 public class InputTest extends GdxTest implements InputProcessor {
 
 	@Override
 	public void create () {
-//		Gdx.input = new RemoteInput();
+// Gdx.input = new RemoteInput();
 		Gdx.input.setInputProcessor(this);
-//		Gdx.input.setCursorCatched(true);
+// Gdx.input.setCursorCatched(true);
+//
+// Gdx.input.getTextInput(new Input.TextInputListener() {
+// @Override
+// public void input(String text) {
+// Gdx.app.log("Input test", "Input value: " + text);
+// }
+//
+// @Override
+// public void canceled() {
+// Gdx.app.log("Input test", "Canceled input text");
+// }
+// }, "Title", "Text", "Placeholder");
 	}
 
 	@Override
@@ -37,7 +48,8 @@ public class InputTest extends GdxTest implements InputProcessor {
 		if (Gdx.input.justTouched()) {
 			Gdx.app.log("Input Test", "just touched, button: " + (Gdx.input.isButtonPressed(Buttons.LEFT) ? "left " : "")
 				+ (Gdx.input.isButtonPressed(Buttons.MIDDLE) ? "middle " : "")
-				+ (Gdx.input.isButtonPressed(Buttons.RIGHT) ? "right" : ""));
+				+ (Gdx.input.isButtonPressed(Buttons.RIGHT) ? "right" : "") + (Gdx.input.isButtonPressed(Buttons.BACK) ? "back" : "")
+				+ (Gdx.input.isButtonPressed(Buttons.FORWARD) ? "forward" : ""));
 		}
 
 		for (int i = 0; i < 10; i++) {
@@ -89,19 +101,14 @@ public class InputTest extends GdxTest implements InputProcessor {
 	}
 
 	@Override
-	public boolean touchMoved (int x, int y) {
+	public boolean mouseMoved (int x, int y) {
 		Gdx.app.log("Input Test", "touch moved: " + x + ", " + y);
 		return false;
 	}
 
 	@Override
-	public boolean scrolled (int amount) {
-		Gdx.app.log("Input Test", "scrolled: " + amount);
-		return false;
-	}
-
-	@Override
-	public boolean needsGL20 () {
+	public boolean scrolled (float amountX, float amountY) {
+		Gdx.app.log("Input Test", "scrolled: " + amountY);
 		return false;
 	}
 
@@ -109,6 +116,8 @@ public class InputTest extends GdxTest implements InputProcessor {
 		if (button == Buttons.LEFT) return "left";
 		if (button == Buttons.RIGHT) return "right";
 		if (button == Buttons.MIDDLE) return "middle";
-		return "left";
+		if (button == Buttons.BACK) return "back";
+		if (button == Buttons.FORWARD) return "forward";
+		return "unknown";
 	}
 }

@@ -367,8 +367,8 @@ public abstract class LongBuffer extends Buffer implements Comparable<LongBuffer
 		return this;
 	}
 
-	/** Writes all the remaining longs of the {@code src} long buffer to this buffer's current position, and increases both buffers'
-	 * position by the number of longs copied.
+	/** Writes all the remaining longs of the {@code src} long buffer to this buffer's current position, and increases both
+	 * buffers' position by the number of longs copied.
 	 * 
 	 * @param src the source long buffer.
 	 * @return this buffer.
@@ -419,14 +419,14 @@ public abstract class LongBuffer extends Buffer implements Comparable<LongBuffer
 	 * @return a string representing the state of this long buffer.
 	 * @since Android 1.0 */
 	public String toString () {
-		StringBuffer buf = new StringBuffer();
-		buf.append(getClass().getName());
-		buf.append(", status: capacity="); //$NON-NLS-1$
-		buf.append(capacity());
-		buf.append(" position="); //$NON-NLS-1$
-		buf.append(position());
-		buf.append(" limit="); //$NON-NLS-1$
-		buf.append(limit());
-		return buf.toString();
+		StringBuilder sb = new StringBuilder();
+		sb.append(getClass().getName());
+		sb.append(", status: capacity="); //$NON-NLS-1$
+		sb.append(capacity());
+		sb.append(" position="); //$NON-NLS-1$
+		sb.append(position());
+		sb.append(" limit="); //$NON-NLS-1$
+		sb.append(limit());
+		return sb.toString();
 	}
 }

@@ -34,11 +34,6 @@ public class IndexBufferObjectShaderTest extends GdxTest {
 	IndexBufferObject ibo;
 
 	@Override
-	public boolean needsGL20 () {
-		return true;
-	}
-
-	@Override
 	public void dispose () {
 		texture.dispose();
 		shader.dispose();
@@ -50,20 +45,17 @@ public class IndexBufferObjectShaderTest extends GdxTest {
 	public void render () {
 // System.out.println( "render");
 
-		GL20 gl = Gdx.gl20;
-		gl.glViewport(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-		gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+		Gdx.gl.glViewport(0, 0, Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight());
+		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-		gl.glEnable(GL20.GL_TEXTURE_2D);
-		shader.begin();
+		shader.bind();
 		shader.setUniformi("u_texture", 0);
 		texture.bind();
 		vbo.bind(shader);
 		ibo.bind();
-		gl.glDrawElements(GL20.GL_TRIANGLES, 3, GL20.GL_UNSIGNED_SHORT, 0);
+		Gdx.gl20.glDrawElements(GL20.GL_TRIANGLES, 3, GL20.GL_UNSIGNED_SHORT, 0);
 		ibo.unbind();
 		vbo.unbind(shader);
-		shader.end();
 	}
 
 	@Override
@@ -79,8 +71,8 @@ public class IndexBufferObjectShaderTest extends GdxTest {
 
 		shader = new ShaderProgram(vertexShader, fragmentShader);
 		vbo = new VertexBufferObject(true, 3, new VertexAttribute(VertexAttributes.Usage.Position, 2, "a_position"),
-			new VertexAttribute(VertexAttributes.Usage.TextureCoordinates, 2, "a_texCoords"), new VertexAttribute(
-				VertexAttributes.Usage.ColorPacked, 4, "a_color"));
+			new VertexAttribute(VertexAttributes.Usage.TextureCoordinates, 2, "a_texCoords"),
+			new VertexAttribute(VertexAttributes.Usage.ColorPacked, 4, "a_color"));
 		float[] vertices = new float[] {-1, -1, 0, 0, Color.toFloatBits(1f, 0f, 0f, 1f), 0, 1, 0.5f, 1.0f,
 			Color.toFloatBits(0f, 1f, 0f, 1f), 1, -1, 1, 0, Color.toFloatBits(0f, 0f, 1f, 1f)};
 		vbo.setVertices(vertices, 0, vertices.length);

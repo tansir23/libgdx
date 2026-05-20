@@ -16,8 +16,9 @@
 
 package java.nio;
 
-import com.google.gwt.typedarrays.client.ArrayBufferView;
-import com.google.gwt.typedarrays.client.Int16Array;
+import com.google.gwt.typedarrays.shared.ArrayBufferView;
+import com.google.gwt.typedarrays.shared.Int16Array;
+import com.google.gwt.typedarrays.shared.TypedArrays;
 
 /** This class wraps a byte buffer to be a short buffer.
  * <p>
@@ -28,7 +29,8 @@ import com.google.gwt.typedarrays.client.Int16Array;
  * <li>The byte buffer's position and limit are NOT linked with the adapter. The adapter extends Buffer, thus has its own position
  * and limit.</li>
  * </ul>
- * </p> */
+ * </p>
+ */
 final class DirectReadWriteShortBufferAdapter extends ShortBuffer implements HasArrayBufferView {
 // implements DirectBuffer {
 
@@ -43,7 +45,7 @@ final class DirectReadWriteShortBufferAdapter extends ShortBuffer implements Has
 		super((byteBuffer.capacity() >> 1));
 		this.byteBuffer = byteBuffer;
 		this.byteBuffer.clear();
-		this.shortArray = Int16Array.create(byteBuffer.byteArray.getBuffer(), byteBuffer.byteArray.getByteOffset(), capacity);
+		this.shortArray = TypedArrays.createInt16Array(byteBuffer.byteArray.buffer(), byteBuffer.byteArray.byteOffset(), capacity);
 	}
 
 	// TODO(haustein) This will be slow

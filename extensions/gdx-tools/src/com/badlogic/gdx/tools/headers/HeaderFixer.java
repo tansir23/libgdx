@@ -25,6 +25,9 @@ import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.tools.FileProcessor;
 
 public class HeaderFixer {
+	static int filesScanned;
+	static int filesChanged;
+
 	static class HeaderFileProcessor extends FileProcessor {
 		final String header;
 
@@ -36,19 +39,21 @@ public class HeaderFixer {
 		}
 
 		@Override
-		protected void processFile (InputFile inputFile) throws Exception {
+		protected void processFile (Entry inputFile) throws Exception {
+			filesScanned++;
 			String content = new FileHandle(inputFile.inputFile).readString();
-			content = content.trim();
-			if (content.startsWith("package")) {
+			if (content.trim().startsWith("package")) {
 				System.out.println("File '" + inputFile.inputFile + "' header fixed");
+				filesChanged++;
 				BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileHandle(inputFile.outputFile).write(false)));
-				writer.write(header + "\n" + content);
+
+				writer.write(header + "\n\n" + content);
 				writer.close();
 			}
 		}
 
 		@Override
-		protected void processDir (InputFile inputDir, ArrayList<InputFile> value) throws Exception {
+		protected void processDir (Entry inputDir, ArrayList<Entry> value) throws Exception {
 		}
 	}
 
@@ -66,5 +71,6 @@ public class HeaderFixer {
 		} else {
 			HeaderFixer.process(args[0]);
 		}
+		System.out.println("Changed " + filesChanged + " / " + filesScanned + " files.");
 	}
 }

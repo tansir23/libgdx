@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright 2011 See AUTHORS file.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@ package com.badlogic.gdx.graphics.glutils;
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -26,9 +27,11 @@ import java.util.zip.GZIPOutputStream;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Pixmap.Format;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.BufferUtils;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.GdxRuntimeException;
+import com.badlogic.gdx.utils.StreamUtils;
 
 /** Class for encoding and decoding ETC1 compressed images. Also provides methods to add a PKM header.
  * @author mzechner */
@@ -49,11 +52,12 @@ public class ETC1 {
 		/** the offset in bytes to the actual compressed data. Might be 16 if this contains a PKM header, 0 otherwise **/
 		public final int dataOffset;
 
-		ETC1Data (int width, int height, ByteBuffer compressedData, int dataOffset) {
+		public ETC1Data (int width, int height, ByteBuffer compressedData, int dataOffset) {
 			this.width = width;
 			this.height = height;
 			this.compressedData = compressedData;
 			this.dataOffset = dataOffset;
+			checkNPOT();
 		}
 
 		public ETC1Data (FileHandle pkmFile) {
@@ -67,21 +71,25 @@ public class ETC1 {
 				while ((readBytes = in.read(buffer)) != -1) {
 					compressedData.put(buffer, 0, readBytes);
 				}
-				compressedData.position(0);
-				compressedData.limit(compressedData.capacity());
+				((Buffer)compressedData).position(0);
+				((Buffer)compressedData).limit(compressedData.capacity());
 			} catch (Exception e) {
 				throw new GdxRuntimeException("Couldn't load pkm file '" + pkmFile + "'", e);
 			} finally {
-				if (in != null) try {
-					in.close();
-				} catch (Exception e) {
-				}
+				StreamUtils.closeQuietly(in);
 			}
 
 			width = getWidthPKM(compressedData, 0);
 			height = getHeightPKM(compressedData, 0);
 			dataOffset = PKM_HEADER_SIZE;
-			compressedData.position(dataOffset);
+			((Buffer)compressedData).position(dataOffset);
+			checkNPOT();
+		}
+
+		private void checkNPOT () {
+			if (!MathUtils.isPowerOfTwo(width) || !MathUtils.isPowerOfTwo(height)) {
+				System.out.println("ETC1Data " + "warning: non-power-of-two ETC1 textures may crash the driver of PowerVR GPUs");
+			}
 		}
 
 		/** @return whether this ETC1Data has a PKM header */
@@ -95,8 +103,8 @@ public class ETC1 {
 			DataOutputStream write = null;
 			byte[] buffer = new byte[10 * 1024];
 			int writtenBytes = 0;
-			compressedData.position(0);
-			compressedData.limit(compressedData.capacity());
+			((Buffer)compressedData).position(0);
+			((Buffer)compressedData).limit(compressedData.capacity());
 			try {
 				write = new DataOutputStream(new GZIPOutputStream(file.write(false)));
 				write.writeInt(compressedData.capacity());
@@ -109,13 +117,10 @@ public class ETC1 {
 			} catch (Exception e) {
 				throw new GdxRuntimeException("Couldn't write PKM file to '" + file + "'", e);
 			} finally {
-				if (write != null) try {
-					write.close();
-				} catch (Exception e) {
-				}
+				StreamUtils.closeQuietly(write);
 			}
-			compressedData.position(dataOffset);
-			compressedData.limit(compressedData.capacity());
+			((Buffer)compressedData).position(dataOffset);
+			((Buffer)compressedData).limit(compressedData.capacity());
 		}
 
 		/** Releases the native resources of the ETC1Data instance. */
@@ -146,6 +151,7 @@ public class ETC1 {
 	public static ETC1Data encodeImage (Pixmap pixmap) {
 		int pixelSize = getPixelSize(pixmap.getFormat());
 		ByteBuffer compressedData = encodeImage(pixmap.getPixels(), 0, pixmap.getWidth(), pixmap.getHeight(), pixelSize);
+		BufferUtils.newUnsafeByteBuffer(compressedData);
 		return new ETC1Data(pixmap.getWidth(), pixmap.getHeight(), compressedData, 0);
 	}
 
@@ -156,6 +162,7 @@ public class ETC1 {
 	public static ETC1Data encodeImagePKM (Pixmap pixmap) {
 		int pixelSize = getPixelSize(pixmap.getFormat());
 		ByteBuffer compressedData = encodeImagePKM(pixmap.getPixels(), 0, pixmap.getWidth(), pixmap.getHeight(), pixelSize);
+		BufferUtils.newUnsafeByteBuffer(compressedData);
 		return new ETC1Data(pixmap.getWidth(), pixmap.getHeight(), compressedData, 16);
 	}
 
@@ -184,7 +191,8 @@ public class ETC1 {
 		decodeImage(etc1Data.compressedData, dataOffset, pixmap.getPixels(), 0, width, height, pixelSize);
 		return pixmap;
 	}
-	
+
+	// @off
 	/*JNI
 	#include <etc1/etc1_utils.h>
 	#include <stdlib.h>
@@ -196,7 +204,7 @@ public class ETC1 {
 	public static native int getCompressedDataSize (int width, int height); /*
 		return etc1_get_encoded_data_size(width, height);
 	*/
-	
+
 
 	/** Writes a PKM header to the {@link ByteBuffer}. Does not modify the position or limit of the ByteBuffer.
 	 * @param header the direct native order {@link ByteBuffer}

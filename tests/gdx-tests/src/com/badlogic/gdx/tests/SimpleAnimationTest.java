@@ -17,8 +17,7 @@
 package com.badlogic.gdx.tests;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.graphics.GL10;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -27,22 +26,16 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.tests.utils.GdxTest;
 
 public class SimpleAnimationTest extends GdxTest {
-
-	@Override
-	public boolean needsGL20 () {
-		return false;
-	}
-
-	private Animation currentWalk;
+	private Animation<TextureRegion> currentWalk;
 	private float currentFrameTime;
 	private Vector2 position;
 
 	private Texture texture;
 
-	private Animation downWalk;
-	private Animation leftWalk;
-	private Animation rightWalk;
-	private Animation upWalk;
+	private Animation<TextureRegion> downWalk;
+	private Animation<TextureRegion> leftWalk;
+	private Animation<TextureRegion> rightWalk;
+	private Animation<TextureRegion> upWalk;
 
 	private SpriteBatch spriteBatch;
 
@@ -57,10 +50,10 @@ public class SimpleAnimationTest extends GdxTest {
 		TextureRegion[] leftWalkReg = regions[1];
 		TextureRegion[] rightWalkReg = regions[2];
 		TextureRegion[] upWalkReg = regions[3];
-		downWalk = new Animation(ANIMATION_SPEED, downWalkReg);
-		leftWalk = new Animation(ANIMATION_SPEED, leftWalkReg);
-		rightWalk = new Animation(ANIMATION_SPEED, rightWalkReg);
-		upWalk = new Animation(ANIMATION_SPEED, upWalkReg);
+		downWalk = new Animation<TextureRegion>(ANIMATION_SPEED, downWalkReg);
+		leftWalk = new Animation<TextureRegion>(ANIMATION_SPEED, leftWalkReg);
+		rightWalk = new Animation<TextureRegion>(ANIMATION_SPEED, rightWalkReg);
+		upWalk = new Animation<TextureRegion>(ANIMATION_SPEED, upWalkReg);
 
 		currentWalk = leftWalk;
 		currentFrameTime = 0.0f;
@@ -71,7 +64,7 @@ public class SimpleAnimationTest extends GdxTest {
 
 	@Override
 	public void render () {
-		Gdx.gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
+		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		currentFrameTime += Gdx.graphics.getDeltaTime();
 
 		spriteBatch.begin();

@@ -28,20 +28,20 @@ public final class WindowedMean {
 	float mean = 0;
 	boolean dirty = true;
 
-	/** constructor, window_size specifies the number of samples we will continuously get the mean and variance from. the class will
-	 * only return meaning full values if at least window_size values have been added.
+	/** constructor, window_size specifies the number of samples we will continuously get the mean and variance from. the class
+	 * will only return meaning full values if at least window_size values have been added.
 	 * 
 	 * @param window_size size of the sample window */
 	public WindowedMean (int window_size) {
 		values = new float[window_size];
 	}
 
-	/** @return wheter the value returned will be meaningfull */
+	/** @return whether the value returned will be meaningful */
 	public boolean hasEnoughData () {
 		return added_values >= values.length;
 	}
 
-	/** clears this WindowedMean. The class will only return meaningfull values after enough data has been added again. */
+	/** clears this WindowedMean. The class will only return meaningful values after enough data has been added again. */
 	public void clear () {
 		added_values = 0;
 		last_value = 0;
@@ -50,22 +50,22 @@ public final class WindowedMean {
 		dirty = true;
 	}
 
-	/** adds a new sample to this mean. in case the window is full the oldest value will be replaced by this new value.
+	/** adds a new sample to this mean. In case the window is full the oldest value will be replaced by this new value.
 	 * 
 	 * @param value The value to add */
 	public void addValue (float value) {
-		added_values++;
+		if (added_values < values.length) added_values++;
 		values[last_value++] = value;
 		if (last_value > values.length - 1) last_value = 0;
 		dirty = true;
 	}
 
-	/** returns the mean of the samples added to this instance. only returns meaningfull results when at least window_size samples
+	/** returns the mean of the samples added to this instance. Only returns meaningful results when at least window_size samples
 	 * as specified in the constructor have been added.
 	 * @return the mean */
 	public float getMean () {
 		if (hasEnoughData()) {
-			if (dirty == true) {
+			if (dirty) {
 				float mean = 0;
 				for (int i = 0; i < values.length; i++)
 					mean += values[i];
@@ -80,7 +80,7 @@ public final class WindowedMean {
 
 	/** @return the oldest value in the window */
 	public float getOldest () {
-		return last_value == values.length - 1 ? values[0] : values[last_value + 1];
+		return added_values < values.length ? values[0] : values[last_value];
 	}
 
 	/** @return the value last added */
@@ -99,5 +99,41 @@ public final class WindowedMean {
 		}
 
 		return (float)Math.sqrt(sum / values.length);
+	}
+
+	public float getLowest () {
+		float lowest = Float.MAX_VALUE;
+		for (int i = 0; i < values.length; i++)
+			lowest = Math.min(lowest, values[i]);
+		return lowest;
+	}
+
+	public float getHighest () {
+		float lowest = Float.MIN_NORMAL;
+		for (int i = 0; i < values.length; i++)
+			lowest = Math.max(lowest, values[i]);
+		return lowest;
+	}
+
+	public int getValueCount () {
+		return added_values;
+	}
+
+	public int getWindowSize () {
+		return values.length;
+	}
+
+	/** @return A new <code>float[]</code> containing all values currently in the window of the stream, in order from oldest to
+	 *         latest. The length of the array is smaller than the window size if not enough data has been added. */
+	public float[] getWindowValues () {
+		float[] windowValues = new float[added_values];
+		if (hasEnoughData()) {
+			for (int i = 0; i < windowValues.length; i++) {
+				windowValues[i] = values[(i + last_value) % values.length];
+			}
+		} else {
+			System.arraycopy(values, 0, windowValues, 0, added_values);
+		}
+		return windowValues;
 	}
 }

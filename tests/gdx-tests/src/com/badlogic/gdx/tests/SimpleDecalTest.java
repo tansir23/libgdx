@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  ******************************************************************************/
+
 package com.badlogic.gdx.tests;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.FPSLogger;
-import com.badlogic.gdx.graphics.GL10;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g3d.decals.CameraGroupStrategy;
 import com.badlogic.gdx.graphics.g3d.decals.Decal;
@@ -28,6 +30,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.tests.utils.GdxTest;
 import com.badlogic.gdx.tests.utils.PerspectiveCamController;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.ScreenUtils;
 
 public class SimpleDecalTest extends GdxTest {
 	private static final int NUM_DECALS = 3;
@@ -51,7 +54,7 @@ public class SimpleDecalTest extends GdxTest {
 		batch = new DecalBatch(new CameraGroupStrategy(camera));
 
 		TextureRegion[] textures = {new TextureRegion(new Texture(Gdx.files.internal("data/egg.png"))),
-			new TextureRegion(new Texture(Gdx.files.internal("data/wheel.png"))),
+			new TextureRegion(new Texture(Gdx.files.internal("data/sys.png"))),
 			new TextureRegion(new Texture(Gdx.files.internal("data/badlogic.jpg")))};
 
 		Decal decal = Decal.newDecal(1, 1, textures[1]);
@@ -79,18 +82,18 @@ public class SimpleDecalTest extends GdxTest {
 	private boolean billboard = true;
 
 	public void render () {
-		Gdx.gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
-		Gdx.gl.glEnable(GL10.GL_DEPTH_TEST);
+		ScreenUtils.clear(Color.DARK_GRAY, true);
+		Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
 
 		camera.update();
 		for (int i = 0; i < decals.size; i++) {
 			Decal decal = decals.get(i);
 			if (billboard) {
 				// billboarding for ortho cam :)
-//				dir.set(-camera.direction.x, -camera.direction.y, -camera.direction.z);
-//				decal.setRotation(dir, Vector3.Y);
-				
-				// billboarding for perspective cam 
+// dir.set(-camera.direction.x, -camera.direction.y, -camera.direction.z);
+// decal.setRotation(dir, Vector3.Y);
+
+				// billboarding for perspective cam
 				decal.lookAt(camera.position, camera.up);
 			}
 			batch.add(decal);
@@ -102,10 +105,5 @@ public class SimpleDecalTest extends GdxTest {
 	@Override
 	public void dispose () {
 		batch.dispose();
-	}
-
-	@Override
-	public boolean needsGL20 () {
-		return true;
 	}
 }

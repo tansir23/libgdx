@@ -17,20 +17,21 @@
 package com.badlogic.gdx.tests;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.GL10;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.NinePatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.CheckBox;
-import com.badlogic.gdx.scenes.scene2d.ui.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton.TextButtonStyle;
-import com.badlogic.gdx.scenes.scene2d.ui.tablelayout.Table;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.tests.utils.GdxTest;
+import com.badlogic.gdx.utils.ScreenUtils;
 
 public class TableTest extends GdxTest {
 	Skin skin;
@@ -40,10 +41,10 @@ public class TableTest extends GdxTest {
 
 	@Override
 	public void create () {
-		stage = new Stage(0, 0, false);
+		stage = new Stage();
 		Gdx.input.setInputProcessor(stage);
 
-		skin = new Skin(Gdx.files.internal("data/uiskin.json"), Gdx.files.internal("data/uiskin.png"));
+		skin = new Skin(Gdx.files.internal("data/uiskin.json"));
 
 		texture = new Texture(Gdx.files.internal("data/badlogic.jpg"));
 		TextureRegion region = new TextureRegion(texture);
@@ -52,54 +53,68 @@ public class TableTest extends GdxTest {
 
 		Label label = new Label("This is some text.", skin);
 
-		root = new Table();
+		root = new Table() {
+			public void draw (Batch batch, float parentAlpha) {
+				super.draw(batch, parentAlpha);
+			}
+		};
 		stage.addActor(root);
+		// root.setTransform(true);
 
 		Table table = new Table();
-		// root.add(table);
-
-		// table.setBackground(region);
-		table.setBackground(patch);
-		table.setClip(true);
-		table.size(75, 75);
+		table.setTransform(true);
+		table.setPosition(100, 100);
+		table.setOrigin(0, 0);
+		table.setRotation(45);
+		table.setScaleY(2);
 		table.add(label);
-
-		table.setClickListener(new ClickListener() {
-			public void click (Actor actor, float x, float y) {
+		table.add(new TextButton("Text Button", skin));
+		table.pack();
+		// table.debug();
+		table.addListener(new ClickListener() {
+			public void clicked (InputEvent event, float x, float y) {
 				System.out.println("click!");
 			}
 		});
+// root.addActor(table);
 
-		root.x = 10;
-		root.y = 10;
-		
+		TextButton button = new TextButton("Text Button", skin);
+		Table table2 = new Table();
+		// table2.debug()
+		table2.add(button);
+		table2.setTransform(true);
+		table2.setScaleX(1.5f);
+		table2.setOrigin(table2.getPrefWidth() / 2, table2.getPrefHeight() / 2);
+
+		// Test colspan with expandX.
+		// root.setPosition(10, 10);
 		root.debug();
-		root.add(new Label("meow meow meow meow meow meow meow meow meow meow meow meow", skin)).colspan(3);
+		root.setFillParent(true);
+		root.add(new Label("meow meow meow meow meow meow meow meow meow meow meow meow", skin)).colspan(3).expandX();
+		root.add(new TextButton("Text Button", skin));
 		root.row();
-		root.add(new TextButton("Text Button", skin)).expand();
-		root.add(new TextButton("Toggle Button", skin.getStyle("toggle", TextButtonStyle.class)));
-		root.add(new CheckBox("meow", skin));
-		root.pack();
-		//root.add(new Button(new Image(region), skin));
-//		root.add(new LabelButton("Toggley", skin.getStyle("toggle", LabelButtonStyle.class)));
+		root.add(new TextButton("Text Button", skin));
+		root.add(new TextButton("Toggle Button", skin.get("toggle", TextButtonStyle.class)));
+		root.add(new CheckBox("meow meow meow meow meow meow meow meow", skin));
+		// root.pack();
+		// root.add(new Button(new Image(region), skin));
+		// root.add(new LabelButton("Toggley", skin.getStyle("toggle", LabelButtonStyle.class)));
 	}
 
 	@Override
 	public void render () {
-		Gdx.gl.glClearColor(0.2f, 0.2f, 0.2f, 1);
-		Gdx.gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
+		ScreenUtils.clear(0.2f, 0.2f, 0.2f, 1);
 
 		stage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
 		stage.draw();
-		Table.drawDebug(stage);
 	}
 
 	@Override
 	public void resize (int width, int height) {
-		stage.setViewport(width, height, false);
-//		root.width = width;
-//		root.height = height;
-//		root.invalidate();
+		stage.getViewport().update(width, height, true);
+// root.width = width;
+// root.height = height;
+// root.invalidate();
 	}
 
 	@Override

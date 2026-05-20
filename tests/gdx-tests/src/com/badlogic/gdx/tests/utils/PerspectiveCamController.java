@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  ******************************************************************************/
+
 package com.badlogic.gdx.tests.utils;
 
 import com.badlogic.gdx.Gdx;
@@ -24,6 +25,8 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 
 public class PerspectiveCamController extends InputAdapter {
+	private final static Vector3 tmpV = new Vector3();
+
 	public PerspectiveCamera cam;
 
 	enum TransformMode {
@@ -73,7 +76,7 @@ public class PerspectiveCamController extends InputAdapter {
 		if (mode == TransformMode.Rotate) {
 			point.set(cam.position).sub(lookAt);
 
-			if (point.tmp().nor().dot(yAxis) < 0.9999f) {
+			if (tmpV.set(point).nor().dot(yAxis) < 0.9999f) {
 				xAxis.set(cam.direction).crs(yAxis).nor();
 				rotMatrix.setToRotation(xAxis, delta.y / 5);
 				point.mul(rotMatrix);
@@ -99,8 +102,8 @@ public class PerspectiveCamController extends InputAdapter {
 	}
 
 	@Override
-	public boolean scrolled (int amount) {
-		cam.fieldOfView -= -amount * Gdx.graphics.getDeltaTime() * 100;
+	public boolean scrolled (float amountX, float amountY) {
+		cam.fieldOfView -= -amountY * Gdx.graphics.getDeltaTime() * 100;
 		cam.update();
 		return true;
 	}

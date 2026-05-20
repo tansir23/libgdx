@@ -19,7 +19,8 @@ package com.badlogic.gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 
-/** Provides standard access to the filesystem, classpath, Android SD card, and Android assets directory.
+/** Provides standard access to the filesystem, classpath, Android app storage (internal and external), and Android assets
+ * directory.
  * @author mzechner
  * @author Nathan Sweet */
 public interface Files {
@@ -37,13 +38,14 @@ public interface Files {
 		 * Internal files are always readonly. */
 		Internal,
 
-		/** Path relative to the root of the SD card on Android and to the home directory of the current user on the desktop. */
+		/** Path relative to the root of the app external storage on Android and to the home directory of the current user on the
+		 * desktop. */
 		External,
 
 		/** Path that is a fully qualified, absolute filesystem path. To ensure portability across platforms use absolute files only
 		 * when absolutely (heh) necessary. */
 		Absolute,
-		
+
 		/** Path relative to the private files directory on Android and to the application's root directory on the desktop. */
 		Local;
 	}
@@ -68,19 +70,18 @@ public interface Files {
 
 	/** Convenience method that returns a {@link FileType#Local} file handle. */
 	public FileHandle local (String path);
-	
-	/** Returns the external storage path directory. This is the SD card on Android and the home directory of the current user on
-	 * the desktop. */
+
+	/** Returns the external storage path directory. This is the app external storage on Android and the home directory of the
+	 * current user on the desktop. */
 	public String getExternalStoragePath ();
 
-	/** Returns true if the external storage is ready for file IO. Eg, on Android, the SD card is not available when mounted for use
-	 * with a PC. */
+	/** Returns true if the external storage is ready for file IO. */
 	public boolean isExternalStorageAvailable ();
-	
+
 	/** Returns the local storage path directory. This is the private files directory on Android and the directory of the jar on
-	 * the desktop. */	
+	 * the desktop. */
 	public String getLocalStoragePath ();
-	
-	/** Returns true if the local storage is ready for file IO. */	
-	public boolean isLocalStorageAvailable();
+
+	/** Returns true if the local storage is ready for file IO. */
+	public boolean isLocalStorageAvailable ();
 }

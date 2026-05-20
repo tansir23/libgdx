@@ -16,83 +16,79 @@
 
 package com.badlogic.gdx.assets;
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-
 import com.badlogic.gdx.assets.loaders.AssetLoader;
 import com.badlogic.gdx.assets.loaders.AsynchronousAssetLoader;
 import com.badlogic.gdx.assets.loaders.SynchronousAssetLoader;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import com.badlogic.gdx.utils.Logger;
 import com.badlogic.gdx.utils.TimeUtils;
+import com.badlogic.gdx.utils.async.AsyncExecutor;
+import com.badlogic.gdx.utils.async.AsyncResult;
+import com.badlogic.gdx.utils.async.AsyncTask;
 
-/** Responsible for loading an asset through an {@link AssetLoader} based on an {@link AssetDescriptor}. Implements
- * {@link Callable} and is used with an {@link ExecutorService threadpool} to load parts of an asset asynchronously if the asset is
- * loaded with an {@link AsynchronousAssetLoader}.
+/** Responsible for loading an asset through an {@link AssetLoader} based on an {@link AssetDescriptor}. Please don't forget to
+ * update the overriding emu file on GWT backend when changing this file!
  * 
  * @author mzechner */
-class AssetLoadingTask implements Callable<Void> {
+class AssetLoadingTask implements AsyncTask<Void> {
 	AssetManager manager;
 	final AssetDescriptor assetDesc;
 	final AssetLoader loader;
-	final ExecutorService threadPool;
+	final AsyncExecutor executor;
 	final long startTime;
 
-	volatile boolean asyncDone = false;
-	boolean dependenciesLoaded = false;
-	Array<AssetDescriptor> dependencies;
-	Future<Void> depsFuture = null;
+	volatile boolean asyncDone;
+	volatile boolean dependenciesLoaded;
+	volatile Array<AssetDescriptor> dependencies;
+	volatile AsyncResult<Void> depsFuture;
+	volatile AsyncResult<Void> loadFuture;
+	volatile Object asset;
 
-	Future<Void> loadFuture = null;
-	Object asset = null;
+	volatile boolean cancel;
 
-	int ticks = 0;
-	boolean cancel = false;
-
-	public AssetLoadingTask (AssetManager manager, AssetDescriptor assetDesc, AssetLoader loader, ExecutorService threadPool) {
+	public AssetLoadingTask (AssetManager manager, AssetDescriptor assetDesc, AssetLoader loader, AsyncExecutor threadPool) {
 		this.manager = manager;
 		this.assetDesc = assetDesc;
 		this.loader = loader;
-		this.threadPool = threadPool;
+		this.executor = threadPool;
 		startTime = manager.log.getLevel() == Logger.DEBUG ? TimeUtils.nanoTime() : 0;
 	}
 
 	/** Loads parts of the asset asynchronously if the loader is an {@link AsynchronousAssetLoader}. */
 	@Override
 	public Void call () throws Exception {
+		if (cancel) return null;
 		AsynchronousAssetLoader asyncLoader = (AsynchronousAssetLoader)loader;
-		if (dependenciesLoaded == false) {
-			dependencies = asyncLoader.getDependencies(assetDesc.fileName, assetDesc.params);
+		if (!dependenciesLoaded) {
+			dependencies = asyncLoader.getDependencies(assetDesc.fileName, resolve(loader, assetDesc), assetDesc.params);
 			if (dependencies != null) {
-				for (AssetDescriptor desc : dependencies) {
-					manager.injectDependency(assetDesc.fileName, desc);
-				}
+				removeDuplicates(dependencies);
+				manager.injectDependencies(assetDesc.fileName, dependencies);
 			} else {
 				// if we have no dependencies, we load the async part of the task immediately.
-				asyncLoader.loadAsync(manager, assetDesc.fileName, assetDesc.params);
+				asyncLoader.loadAsync(manager, assetDesc.fileName, resolve(loader, assetDesc), assetDesc.params);
 				asyncDone = true;
 			}
 		} else {
-			asyncLoader.loadAsync(manager, assetDesc.fileName, assetDesc.params);
+			asyncLoader.loadAsync(manager, assetDesc.fileName, resolve(loader, assetDesc), assetDesc.params);
+			asyncDone = true;
 		}
 		return null;
 	}
 
 	/** Updates the loading of the asset. In case the asset is loaded with an {@link AsynchronousAssetLoader}, the loaders
-	 * {@link AsynchronousAssetLoader#loadAsync(AssetManager, String, AssetLoaderParameters)} method is first called on a worker
-	 * thread. Once this method returns, the rest of the asset is loaded on the rendering thread via
-	 * {@link AsynchronousAssetLoader#loadSync(AssetManager, String, AssetLoaderParameters)}.
+	 * {@link AsynchronousAssetLoader#loadAsync(AssetManager, String, FileHandle, AssetLoaderParameters)} method is first called on
+	 * a worker thread. Once this method returns, the rest of the asset is loaded on the rendering thread via
+	 * {@link AsynchronousAssetLoader#loadSync(AssetManager, String, FileHandle, AssetLoaderParameters)}.
 	 * @return true in case the asset was fully loaded, false otherwise
 	 * @throws GdxRuntimeException */
 	public boolean update () {
-		ticks++;
-		if (loader instanceof SynchronousAssetLoader) {
+		if (loader instanceof SynchronousAssetLoader)
 			handleSyncLoader();
-		} else {
+		else
 			handleAsyncLoader();
-		}
 		return asset != null;
 	}
 
@@ -100,56 +96,66 @@ class AssetLoadingTask implements Callable<Void> {
 		SynchronousAssetLoader syncLoader = (SynchronousAssetLoader)loader;
 		if (!dependenciesLoaded) {
 			dependenciesLoaded = true;
-			dependencies = syncLoader.getDependencies(assetDesc.fileName, assetDesc.params);
+			dependencies = syncLoader.getDependencies(assetDesc.fileName, resolve(loader, assetDesc), assetDesc.params);
 			if (dependencies == null) {
-				asset = syncLoader.load(manager, assetDesc.fileName, assetDesc.params);
+				asset = syncLoader.load(manager, assetDesc.fileName, resolve(loader, assetDesc), assetDesc.params);
 				return;
 			}
-			for (AssetDescriptor desc : dependencies) {
-				manager.injectDependency(assetDesc.fileName, desc);
-			}
-		} else {
-			asset = syncLoader.load(manager, assetDesc.fileName, assetDesc.params);
-		}
+			removeDuplicates(dependencies);
+			manager.injectDependencies(assetDesc.fileName, dependencies);
+		} else
+			asset = syncLoader.load(manager, assetDesc.fileName, resolve(loader, assetDesc), assetDesc.params);
 	}
 
 	private void handleAsyncLoader () {
 		AsynchronousAssetLoader asyncLoader = (AsynchronousAssetLoader)loader;
 		if (!dependenciesLoaded) {
-			if (depsFuture == null) {
-				depsFuture = threadPool.submit(this);
-			} else {
-				if (depsFuture.isDone()) {
-					try {
-						depsFuture.get();
-					} catch (Exception e) {
-						throw new GdxRuntimeException("Couldn't load dependencies of asset '" + assetDesc.fileName + "'", e);
-					}
-					dependenciesLoaded = true;
-					if(asyncDone) {
-						asset = asyncLoader.loadSync(manager, assetDesc.fileName, assetDesc.params);
-					}
+			if (depsFuture == null)
+				depsFuture = executor.submit(this);
+			else if (depsFuture.isDone()) {
+				try {
+					depsFuture.get();
+				} catch (Exception e) {
+					throw new GdxRuntimeException("Couldn't load dependencies of asset: " + assetDesc.fileName, e);
 				}
+				dependenciesLoaded = true;
+				if (asyncDone)
+					asset = asyncLoader.loadSync(manager, assetDesc.fileName, resolve(loader, assetDesc), assetDesc.params);
 			}
-		} else {
-			if (loadFuture == null && !asyncDone) {
-				loadFuture = threadPool.submit(this);
-			} else {
-				if(asyncDone) {
-					asset = asyncLoader.loadSync(manager, assetDesc.fileName, assetDesc.params);
-				} else if (loadFuture.isDone()) {
-					try {
-						loadFuture.get();
-					} catch (Exception e) {
-						throw new GdxRuntimeException("Couldn't load asset '" + assetDesc.fileName + "'", e);
-					}
-					asset = asyncLoader.loadSync(manager, assetDesc.fileName, assetDesc.params);
-				}
+		} else if (loadFuture == null && !asyncDone)
+			loadFuture = executor.submit(this);
+		else if (asyncDone)
+			asset = asyncLoader.loadSync(manager, assetDesc.fileName, resolve(loader, assetDesc), assetDesc.params);
+		else if (loadFuture.isDone()) {
+			try {
+				loadFuture.get();
+			} catch (Exception e) {
+				throw new GdxRuntimeException("Couldn't load asset: " + assetDesc.fileName, e);
 			}
+			asset = asyncLoader.loadSync(manager, assetDesc.fileName, resolve(loader, assetDesc), assetDesc.params);
 		}
 	}
 
-	public Object getAsset () {
-		return asset;
+	/** Called when this task is the task that is currently being processed and it is unloaded. */
+	public void unload () {
+		if (loader instanceof AsynchronousAssetLoader)
+			((AsynchronousAssetLoader)loader).unloadAsync(manager, assetDesc.fileName, resolve(loader, assetDesc), assetDesc.params);
+	}
+
+	private FileHandle resolve (AssetLoader loader, AssetDescriptor assetDesc) {
+		if (assetDesc.file == null) assetDesc.file = loader.resolve(assetDesc.fileName);
+		return assetDesc.file;
+	}
+
+	private void removeDuplicates (Array<AssetDescriptor> array) {
+		boolean ordered = array.ordered;
+		array.ordered = true;
+		for (int i = 0; i < array.size; ++i) {
+			final String fn = array.get(i).fileName;
+			final Class type = array.get(i).type;
+			for (int j = array.size - 1; j > i; --j)
+				if (type == array.get(j).type && fn.equals(array.get(j).fileName)) array.removeIndex(j);
+		}
+		array.ordered = ordered;
 	}
 }

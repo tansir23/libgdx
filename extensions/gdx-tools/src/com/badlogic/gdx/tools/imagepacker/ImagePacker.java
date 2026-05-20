@@ -30,7 +30,8 @@ import java.util.Random;
 
 import javax.imageio.ImageIO;
 
-/** <p>
+/**
+ * <p>
  * A simple image packer class based on the nice algorithm by blackpawn.
  * </p>
  * 
@@ -39,11 +40,11 @@ import javax.imageio.ImageIO;
  * </p>
  * 
  * <p>
- * <b>Usage:</b> instanciate an <code>ImagePacker</code> instance, load and optionally sort the images you want to add by size
+ * <b>Usage:</b> instantiate an <code>ImagePacker</code> instance, load and optionally sort the images you want to add by size
  * (e.g. area) then insert each image via a call to {@link #insertImage(String, BufferedImage)}. When you are done with inserting
  * images you can call {@link #getImage()} for the {@link BufferedImage} that holds the packed images. Additionally you can get a
- * <code>Map<String, Rectangle></code> where the keys the names you specified when inserting and the values are the rectangles
- * within the packed image where that specific image is located. All things are given in pixels.
+ * {@code Map<String, Rectangle>} where the keys the names you specified when inserting and the values are the rectangles within
+ * the packed image where that specific image is located. All things are given in pixels.
  * </p>
  * 
  * <p>
@@ -87,7 +88,8 @@ public class ImagePacker {
 	Node root;
 	Map<String, Rectangle> rects;
 
-	/** <p>
+	/**
+	 * <p>
 	 * Creates a new ImagePacker which will insert all supplied images into a <code>width</code> by <code>height</code> image.
 	 * <code>padding</code> specifies the minimum number of pixels to insert between images. <code>border</code> will duplicate the
 	 * border pixels of the inserted images to avoid seams when rendering with bi-linear filtering on.
@@ -105,7 +107,8 @@ public class ImagePacker {
 		this.rects = new HashMap<String, Rectangle>();
 	}
 
-	/** <p>
+	/**
+	 * <p>
 	 * Inserts the given image. You can later on retrieve the images position in the output image via the supplied name and the
 	 * method {@link #getRects()}.
 	 * </p>
@@ -138,8 +141,8 @@ public class ImagePacker {
 		// not terribly efficient (as the rest of the code) but will do :p
 		if (duplicateBorder) {
 			g.drawImage(image, rect.x, rect.y - 1, rect.x + rect.width, rect.y, 0, 0, image.getWidth(), 1, null);
-			g.drawImage(image, rect.x, rect.y + rect.height, rect.x + rect.width, rect.y + rect.height + 1, 0,
-				image.getHeight() - 1, image.getWidth(), image.getHeight(), null);
+			g.drawImage(image, rect.x, rect.y + rect.height, rect.x + rect.width, rect.y + rect.height + 1, 0, image.getHeight() - 1,
+				image.getWidth(), image.getHeight(), null);
 
 			g.drawImage(image, rect.x - 1, rect.y, rect.x, rect.y + rect.height, 0, 0, 1, image.getHeight(), null);
 			g.drawImage(image, rect.x + rect.width, rect.y, rect.x + rect.width + 1, rect.y + rect.height, image.getWidth() - 1, 0,

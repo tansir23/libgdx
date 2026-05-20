@@ -26,49 +26,50 @@ import com.badlogic.gdx.Preferences;
 
 public class AndroidPreferences implements Preferences {
 	SharedPreferences sharedPrefs;
+	Editor editor;
 
 	public AndroidPreferences (SharedPreferences preferences) {
 		this.sharedPrefs = preferences;
 	}
 
 	@Override
-	public void putBoolean (String key, boolean val) {
-		Editor edit = this.sharedPrefs.edit();
-		edit.putBoolean(key, val);
-		edit.commit();
+	public Preferences putBoolean (String key, boolean val) {
+		edit();
+		editor.putBoolean(key, val);
+		return this;
 	}
 
 	@Override
-	public void putInteger (String key, int val) {
-		Editor edit = this.sharedPrefs.edit();
-		edit.putInt(key, val);
-		edit.commit();
+	public Preferences putInteger (String key, int val) {
+		edit();
+		editor.putInt(key, val);
+		return this;
 	}
 
 	@Override
-	public void putLong (String key, long val) {
-		Editor edit = this.sharedPrefs.edit();
-		edit.putLong(key, val);
-		edit.commit();
+	public Preferences putLong (String key, long val) {
+		edit();
+		editor.putLong(key, val);
+		return this;
 	}
 
 	@Override
-	public void putFloat (String key, float val) {
-		Editor edit = this.sharedPrefs.edit();
-		edit.putFloat(key, val);
-		edit.commit();
+	public Preferences putFloat (String key, float val) {
+		edit();
+		editor.putFloat(key, val);
+		return this;
 	}
 
 	@Override
-	public void putString (String key, String val) {
-		Editor edit = this.sharedPrefs.edit();
-		edit.putString(key, val);
-		edit.commit();
+	public Preferences putString (String key, String val) {
+		edit();
+		editor.putString(key, val);
+		return this;
 	}
 
 	@Override
-	public void put (Map<String, ?> vals) {
-		Editor edit = this.sharedPrefs.edit();
+	public Preferences put (Map<String, ?> vals) {
+		edit();
 		for (Entry<String, ?> val : vals.entrySet()) {
 			if (val.getValue() instanceof Boolean) putBoolean(val.getKey(), (Boolean)val.getValue());
 			if (val.getValue() instanceof Integer) putInteger(val.getKey(), (Integer)val.getValue());
@@ -76,7 +77,7 @@ public class AndroidPreferences implements Preferences {
 			if (val.getValue() instanceof String) putString(val.getKey(), (String)val.getValue());
 			if (val.getValue() instanceof Float) putFloat(val.getKey(), (Float)val.getValue());
 		}
-		edit.commit();
+		return this;
 	}
 
 	@Override
@@ -141,19 +142,27 @@ public class AndroidPreferences implements Preferences {
 
 	@Override
 	public void clear () {
-		Editor edit = sharedPrefs.edit();
-		edit.clear();
-		edit.commit();
+		edit();
+		editor.clear();
 	}
 
 	@Override
 	public void flush () {
+		if (editor != null) {
+			editor.apply();
+			editor = null;
+		}
 	}
 
 	@Override
 	public void remove (String key) {
-		Editor edit = sharedPrefs.edit();
-		edit.remove(key);
-		edit.commit();
+		edit();
+		editor.remove(key);
+	}
+
+	private void edit () {
+		if (editor == null) {
+			editor = sharedPrefs.edit();
+		}
 	}
 }

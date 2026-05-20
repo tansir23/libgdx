@@ -46,8 +46,8 @@ public class ShaderMultitextureTest extends GdxTest {
 			+ "  gl_FragColor = texture2D( s_texture, v_texCoord ) * texture2D( s_texture2, v_texCoord);\n"
 			+ "}                                                   \n";
 		shader = new ShaderProgram(vertexShader, fragmentShader);
-		mesh = new Mesh(true, 4, 6, new VertexAttribute(Usage.Position, 2, "a_position"), new VertexAttribute(
-			Usage.TextureCoordinates, 2, "a_texCoord"));
+		mesh = new Mesh(true, 4, 6, new VertexAttribute(Usage.Position, 2, "a_position"),
+			new VertexAttribute(Usage.TextureCoordinates, 2, "a_texCoord"));
 		float[] vertices = {-0.5f, 0.5f, // Position 0
 			0.0f, 0.0f, // TexCoord 0
 			-0.5f, -0.5f, // Position 1
@@ -87,7 +87,7 @@ public class ShaderMultitextureTest extends GdxTest {
 	}
 
 	public void render () {
-		Gdx.gl20.glViewport(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+		Gdx.gl20.glViewport(0, 0, Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight());
 		Gdx.gl20.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
 		Gdx.gl20.glActiveTexture(GL20.GL_TEXTURE0);
@@ -96,13 +96,11 @@ public class ShaderMultitextureTest extends GdxTest {
 		Gdx.gl20.glActiveTexture(GL20.GL_TEXTURE1);
 		texture2.bind();
 
-		shader.begin();
+		shader.bind();
 		shader.setUniformi("s_texture", 0);
 		shader.setUniformi("s_texture2", 1);
 
 		mesh.render(shader, GL20.GL_TRIANGLES);
-
-		shader.end();
 	}
 
 	@Override
@@ -111,10 +109,5 @@ public class ShaderMultitextureTest extends GdxTest {
 		texture2.dispose();
 		shader.dispose();
 		mesh.dispose();
-	}
-
-	@Override
-	public boolean needsGL20 () {
-		return true;
 	}
 }

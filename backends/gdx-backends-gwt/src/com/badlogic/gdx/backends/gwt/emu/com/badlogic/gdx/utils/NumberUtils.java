@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  ******************************************************************************/
+
 package com.badlogic.gdx.utils;
 
 import com.google.gwt.corp.compatibility.Numbers;
 
-public class NumberUtils {
+public final class NumberUtils {
 
 	public static int floatToIntBits (float value) {
 		return Numbers.floatToIntBits(value);
@@ -26,9 +27,12 @@ public class NumberUtils {
 	public static int floatToRawIntBits (float value) {
 		return Numbers.floatToIntBits(value);
 	}
-	
+
 	public static int floatToIntColor (float value) {
-		return Numbers.floatToIntBits(value);
+		// matches non-emulated behavior except for floats that are infinite or NaN
+		int intBits = Numbers.floatToIntBits(value);
+		intBits |= (int)((intBits >>> 24) * (255f / 254f)) << 24;
+		return intBits;
 	}
 
 	public static float intToFloatColor (int value) {
@@ -42,10 +46,10 @@ public class NumberUtils {
 	}
 
 	public static long doubleToLongBits (double value) {
-		return 0; // FIXME
+		return Numbers.doubleToLongBits(value);
 	}
 
 	public static double longBitsToDouble (long value) {
-		return 0; // FIXME
+		return Numbers.longBitsToDouble(value);
 	}
 }

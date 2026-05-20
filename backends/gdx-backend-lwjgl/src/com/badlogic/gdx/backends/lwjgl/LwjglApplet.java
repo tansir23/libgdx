@@ -24,17 +24,18 @@ import com.badlogic.gdx.ApplicationListener;
 
 /** An OpenGL surface in an applet.
  * @author Nathan Sweet */
+@SuppressWarnings("removal")
 public class LwjglApplet extends Applet {
 	final Canvas canvas;
 	LwjglApplication app;
 
 	class LwjglAppletApplication extends LwjglApplication {
 
-		public LwjglAppletApplication (ApplicationListener listener, boolean useGL2, Canvas canvas) {
-			super(listener, useGL2, canvas);
+		public LwjglAppletApplication (ApplicationListener listener, Canvas canvas) {
+			super(listener, canvas);
 		}
-		
-		public LwjglAppletApplication(ApplicationListener listener, Canvas canvas, LwjglApplicationConfiguration config) {
+
+		public LwjglAppletApplication (ApplicationListener listener, Canvas canvas, LwjglApplicationConfiguration config) {
 			super(listener, config, canvas);
 		}
 
@@ -43,8 +44,8 @@ public class LwjglApplet extends Applet {
 			return ApplicationType.Applet;
 		}
 	}
-	
-	public LwjglApplet(final ApplicationListener listener, final LwjglApplicationConfiguration config) {
+
+	public LwjglApplet (final ApplicationListener listener, final LwjglApplicationConfiguration config) {
 		LwjglNativesLoader.load = false;
 		canvas = new Canvas() {
 			public final void addNotify () {
@@ -64,12 +65,12 @@ public class LwjglApplet extends Applet {
 		canvas.requestFocus();
 	}
 
-	public LwjglApplet (final ApplicationListener listener, final boolean useGL2) {
+	public LwjglApplet (final ApplicationListener listener) {
 		LwjglNativesLoader.load = false;
 		canvas = new Canvas() {
 			public final void addNotify () {
 				super.addNotify();
-				app = new LwjglAppletApplication(listener, useGL2, canvas);
+				app = new LwjglAppletApplication(listener, canvas);
 			}
 
 			public final void removeNotify () {

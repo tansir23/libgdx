@@ -13,38 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  ******************************************************************************/
+
 package com.badlogic.gdx.tests;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.GL10;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.tests.utils.GdxTest;
+import com.badlogic.gdx.utils.ScreenUtils;
 
 public class BlitTest extends GdxTest {
-	@Override
-	public boolean needsGL20 () {
-		return true;
-	}
-	
+
 	Texture rgb888;
 	Texture rgba8888;
 	Texture psRgb888;
 	Texture psRgba8888;
 	SpriteBatch batch;
-	
-	public void create() {
+
+	public void create () {
 		rgb888 = new Texture("data/bobrgb888-32x32.png");
 		rgba8888 = new Texture("data/bobargb8888-32x32.png");
 		psRgb888 = new Texture("data/alpha.png");
 		psRgba8888 = new Texture("data/rgb.png");
 		batch = new SpriteBatch();
 	}
-	
-	public void render() {
-		Gdx.gl.glClearColor(0.4f, 0.4f, 0.4f, 1);
-		Gdx.gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
-		
+
+	public void render () {
+		ScreenUtils.clear(0.4f, 0.4f, 0.4f, 1);
+
 		batch.begin();
 		batch.draw(rgb888, 0, 0);
 		batch.draw(rgba8888, 60, 0);

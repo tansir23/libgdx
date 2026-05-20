@@ -168,21 +168,12 @@ public class ApplyForce extends Box2DTest {
 		if (keyCode == Keys.W) {
 			Vector2 f = m_body.getWorldVector(tmp.set(0, -200));
 			Vector2 p = m_body.getWorldPoint(tmp.set(0, 2));
-			m_body.applyForce(f, p);
+			m_body.applyForce(f, p, true);
 		}
-		if (keyCode == Keys.A) m_body.applyTorque(50);
-		if (keyCode == Keys.D) m_body.applyTorque(-50);
+		if (keyCode == Keys.A) m_body.applyTorque(50, true);
+		if (keyCode == Keys.D) m_body.applyTorque(-50, true);
 
 		return false;
 	}
 
-	public void render () {
-		super.render();
-
-		if (renderer.batch != null) {
-			renderer.batch.begin();
-// renderer.batch.drawText(renderer.font, "Keys (w), (a), (d) to fly", 0, Gdx.app.getGraphics().getHeight(), Color.WHITE);
-			renderer.batch.end();
-		}
-	}
 }

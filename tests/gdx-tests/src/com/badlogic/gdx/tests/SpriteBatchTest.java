@@ -18,7 +18,6 @@ package com.badlogic.gdx.tests;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.graphics.GL10;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Pixmap.Format;
 import com.badlogic.gdx.graphics.Texture;
@@ -26,6 +25,7 @@ import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.tests.utils.GdxTest;
+import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.TimeUtils;
 
 public class SpriteBatchTest extends GdxTest implements InputProcessor {
@@ -55,9 +55,7 @@ public class SpriteBatchTest extends GdxTest implements InputProcessor {
 	}
 
 	private void renderNormal () {
-		GL10 gl = Gdx.graphics.getGL10();
-		gl.glClearColor(0.7f, 0.7f, 0.7f, 1);
-		gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
+		ScreenUtils.clear(0.7f, 0.7f, 0.7f, 1);
 
 		float begin = 0;
 		float end = 0;
@@ -87,8 +85,8 @@ public class SpriteBatchTest extends GdxTest implements InputProcessor {
 
 		start = TimeUtils.nanoTime();
 		for (int i = 0; i < sprites2.length; i += 6)
-			spriteBatch
-				.draw(texture2, sprites2[i], sprites2[i + 1], 16, 16, 32, 32, scale, scale, angle, 0, 0, 32, 32, false, false);
+			spriteBatch.draw(texture2, sprites2[i], sprites2[i + 1], 16, 16, 32, 32, scale, scale, angle, 0, 0, 32, 32, false,
+				false);
 		draw2 = (TimeUtils.nanoTime() - start) / 1000000000.0f;
 
 		start = TimeUtils.nanoTime();
@@ -113,9 +111,7 @@ public class SpriteBatchTest extends GdxTest implements InputProcessor {
 	}
 
 	private void renderSprites () {
-		GL10 gl = Gdx.graphics.getGL10();
-		gl.glClearColor(0.7f, 0.7f, 0.7f, 1);
-		gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
+		ScreenUtils.clear(0.7f, 0.7f, 0.7f, 1);
 
 		float begin = 0;
 		float end = 0;
@@ -190,8 +186,6 @@ public class SpriteBatchTest extends GdxTest implements InputProcessor {
 		texture2 = new Texture(pixmap);
 		pixmap.dispose();
 
-// font = Gdx.graphics.newFont("Arial", 32, FontStyle.Plain);
-
 		for (int i = 0; i < sprites.length; i += 6) {
 			sprites[i] = (int)(Math.random() * (Gdx.graphics.getWidth() - 32));
 			sprites[i + 1] = (int)(Math.random() * (Gdx.graphics.getHeight() - 32));
@@ -222,10 +216,8 @@ public class SpriteBatchTest extends GdxTest implements InputProcessor {
 		Gdx.input.setInputProcessor(this);
 	}
 
-	
-	
 	@Override
-	public void resize(int width, int height) {
+	public void resize (int width, int height) {
 		Gdx.app.log("SpriteBatchTest", "resized: " + width + ", " + height);
 	}
 
@@ -261,17 +253,12 @@ public class SpriteBatchTest extends GdxTest implements InputProcessor {
 	}
 
 	@Override
-	public boolean needsGL20 () {
+	public boolean mouseMoved (int x, int y) {
 		return false;
 	}
 
 	@Override
-	public boolean touchMoved (int x, int y) {
-		return false;
-	}
-
-	@Override
-	public boolean scrolled (int amount) {
+	public boolean scrolled (float amountX, float amountY) {
 		return false;
 	}
 

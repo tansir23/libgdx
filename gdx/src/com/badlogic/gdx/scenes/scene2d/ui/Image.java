@@ -1,186 +1,174 @@
+/*******************************************************************************
+ * Copyright 2011 See AUTHORS file.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 
 package com.badlogic.gdx.scenes.scene2d.ui;
 
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.NinePatch;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
+import com.badlogic.gdx.scenes.scene2d.utils.NinePatchDrawable;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
+import com.badlogic.gdx.scenes.scene2d.utils.TransformDrawable;
+import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.utils.Null;
 import com.badlogic.gdx.utils.Scaling;
 
-/** Displays a {@link TextureRegion} or {@link NinePatch}, scaled various way within the widgets bounds. The preferred size is the
- * actual size of the region or ninepatch. Only when using a TextureRegion will the actor's scale, rotation, and origin be used
- * when drawing.
+/** Displays a {@link Drawable}, scaled various way within the widgets bounds. The preferred size is the min size of the drawable.
+ * Only when using a {@link TextureRegionDrawable} will the actor's scale, rotation, and origin be used when drawing.
  * @author Nathan Sweet */
 public class Image extends Widget {
-	private TextureRegion region;
-	private NinePatch patch;
 	private Scaling scaling;
-	private int align = Align.CENTER;
+	private int align = Align.center;
 	private float imageX, imageY, imageWidth, imageHeight;
-	private ClickListener clickListener;
+	private Drawable drawable;
 
-	/** Creates an image with no region or patch, stretched, and aligned center. */
+	/** Creates an image with no drawable, stretched, and aligned center. */
 	public Image () {
-		this((TextureRegion)null);
+		this((Drawable)null);
+	}
+
+	/** Creates an image stretched, and aligned center.
+	 * @param patch May be null. */
+	public Image (@Null NinePatch patch) {
+		this(new NinePatchDrawable(patch), Scaling.stretch, Align.center);
+	}
+
+	/** Creates an image stretched, and aligned center.
+	 * @param region May be null. */
+	public Image (@Null TextureRegion region) {
+		this(new TextureRegionDrawable(region), Scaling.stretch, Align.center);
 	}
 
 	/** Creates an image stretched, and aligned center. */
 	public Image (Texture texture) {
-		this(new TextureRegion(texture));
+		this(new TextureRegionDrawable(new TextureRegion(texture)));
 	}
 
-	/** Creates an image aligned center. */
-	public Image (Texture texture, Scaling scaling) {
-		this(new TextureRegion(texture), scaling);
-	}
-
-	public Image (Texture texture, Scaling scaling, int align) {
-		this(new TextureRegion(texture), scaling, align);
-	}
-
-	public Image (Texture texture, Scaling scaling, int align, String name) {
-		this(new TextureRegion(texture), scaling, align, name);
+	/** Creates an image stretched, and aligned center. */
+	public Image (Skin skin, String drawableName) {
+		this(skin.getDrawable(drawableName), Scaling.stretch, Align.center);
 	}
 
 	/** Creates an image stretched, and aligned center.
-	 * @param region May be null. */
-	public Image (TextureRegion region) {
-		this(region, Scaling.stretch, Align.CENTER, null);
+	 * @param drawable May be null. */
+	public Image (@Null Drawable drawable) {
+		this(drawable, Scaling.stretch, Align.center);
 	}
 
 	/** Creates an image aligned center.
-	 * @param region May be null. */
-	public Image (TextureRegion region, Scaling scaling) {
-		this(region, scaling, Align.CENTER, null);
+	 * @param drawable May be null. */
+	public Image (@Null Drawable drawable, Scaling scaling) {
+		this(drawable, scaling, Align.center);
 	}
 
-	/** @param region May be null. */
-	public Image (TextureRegion region, Scaling scaling, int align) {
-		this(region, scaling, align, null);
-	}
-
-	/** @param region May be null. */
-	public Image (TextureRegion region, Scaling scaling, int align, String name) {
-		super(name);
-		setRegion(region);
+	/** @param drawable May be null. */
+	public Image (@Null Drawable drawable, Scaling scaling, int align) {
+		setDrawable(drawable);
 		this.scaling = scaling;
 		this.align = align;
-		width = getPrefWidth();
-		height = getPrefHeight();
-	}
-
-	/** Creates an image stretched, and aligned center.
-	 * @param patch May be null. */
-	public Image (NinePatch patch) {
-		this(patch, Scaling.stretch, Align.CENTER, null);
-	}
-
-	/** Creates an image aligned center.
-	 * @param patch May be null. */
-	public Image (NinePatch patch, Scaling scaling) {
-		this(patch, scaling, Align.CENTER, null);
-	}
-
-	/** @param patch May be null. */
-	public Image (NinePatch patch, Scaling scaling, int align) {
-		this(patch, scaling, align, null);
-	}
-
-	/** @param patch May be null. */
-	public Image (NinePatch patch, Scaling scaling, int align, String name) {
-		super(name);
-		setPatch(patch);
-		this.scaling = scaling;
-		this.align = align;
-		width = getPrefWidth();
-		height = getPrefHeight();
+		setSize(getPrefWidth(), getPrefHeight());
 	}
 
 	public void layout () {
-		float regionWidth, regionHeight;
-		if (patch != null) {
-			regionWidth = patch.getTotalWidth();
-			regionHeight = patch.getTotalHeight();
-		} else if (region != null) {
-			regionWidth = region.getRegionWidth();
-			regionHeight = region.getRegionHeight();
-		} else
-			return;
+		if (drawable == null) return;
+
+		float regionWidth = drawable.getMinWidth();
+		float regionHeight = drawable.getMinHeight();
+		float width = getWidth();
+		float height = getHeight();
 
 		Vector2 size = scaling.apply(regionWidth, regionHeight, width, height);
 		imageWidth = size.x;
 		imageHeight = size.y;
 
-		if ((align & Align.LEFT) != 0)
+		if ((align & Align.left) != 0)
 			imageX = 0;
-		else if ((align & Align.RIGHT) != 0)
+		else if ((align & Align.right) != 0)
 			imageX = (int)(width - imageWidth);
 		else
 			imageX = (int)(width / 2 - imageWidth / 2);
 
-		if ((align & Align.TOP) != 0)
+		if ((align & Align.top) != 0)
 			imageY = (int)(height - imageHeight);
-		else if ((align & Align.BOTTOM) != 0)
+		else if ((align & Align.bottom) != 0)
 			imageY = 0;
 		else
 			imageY = (int)(height / 2 - imageHeight / 2);
 	}
 
-	public void draw (SpriteBatch batch, float parentAlpha) {
+	public void draw (Batch batch, float parentAlpha) {
 		validate();
 
+		Color color = getColor();
 		batch.setColor(color.r, color.g, color.b, color.a * parentAlpha);
-		if (patch != null)
-			patch.draw(batch, x + imageX, y + imageY, imageWidth * scaleX, imageHeight * scaleY);
-		else if (region != null) {
-			if (scaleX == 1 && scaleY == 1 && rotation == 0)
-				batch.draw(region, x + imageX, y + imageY, imageWidth, imageHeight);
-			else
-				batch.draw(region, x + imageX, y + imageY, originX - imageX, originY - imageY, imageWidth, imageHeight, scaleX,
-					scaleY, rotation);
+
+		float x = getX();
+		float y = getY();
+		float scaleX = getScaleX();
+		float scaleY = getScaleY();
+
+		if (drawable instanceof TransformDrawable) {
+			float rotation = getRotation();
+			if (scaleX != 1 || scaleY != 1 || rotation != 0) {
+				((TransformDrawable)drawable).draw(batch, x + imageX, y + imageY, getOriginX() - imageX, getOriginY() - imageY,
+					imageWidth, imageHeight, scaleX, scaleY, rotation);
+				return;
+			}
 		}
+		if (drawable != null) drawable.draw(batch, x + imageX, y + imageY, imageWidth * scaleX, imageHeight * scaleY);
 	}
 
-	/** @param region May be null. */
-	public void setRegion (TextureRegion region) {
-		if (region != null) {
-			if (this.region == region) return;
-			if (getPrefWidth() != region.getRegionWidth() || getPrefHeight() != region.getRegionHeight()) invalidateHierarchy();
-		} else {
-			if (getPrefWidth() != 0 || getPrefHeight() != 0) invalidateHierarchy();
-		}
-		this.region = region;
-		patch = null;
+	public void setDrawable (Skin skin, String drawableName) {
+		setDrawable(skin.getDrawable(drawableName));
 	}
 
-	public TextureRegion getRegion () {
-		return region;
+	/** Sets a new drawable for the image. The image's pref size is the drawable's min size. If using the image actor's size rather
+	 * than the pref size, {@link #pack()} can be used to size the image to its pref size.
+	 * @param drawable May be null. */
+	public void setDrawable (@Null Drawable drawable) {
+		if (this.drawable == drawable) return;
+		if (drawable != null) {
+			if (getPrefWidth() != drawable.getMinWidth() || getPrefHeight() != drawable.getMinHeight()) invalidateHierarchy();
+		} else
+			invalidateHierarchy();
+		this.drawable = drawable;
 	}
 
-	/** @param patch May be null. */
-	public void setPatch (NinePatch patch) {
-		if (patch != null) {
-			if (this.patch == patch) return;
-			if (getPrefWidth() != patch.getTotalWidth() || getPrefHeight() != patch.getTotalHeight()) invalidateHierarchy();
-		} else {
-			if (getPrefWidth() != 0 || getPrefHeight() != 0) invalidateHierarchy();
-		}
-		this.patch = patch;
-		region = null;
-	}
-
-	public NinePatch getPatch () {
-		return patch;
+	/** @return May be null. */
+	public @Null Drawable getDrawable () {
+		return drawable;
 	}
 
 	public void setScaling (Scaling scaling) {
 		if (scaling == null) throw new IllegalArgumentException("scaling cannot be null.");
 		this.scaling = scaling;
+		invalidate();
 	}
 
 	public void setAlign (int align) {
 		this.align = align;
+		invalidate();
+	}
+
+	public int getAlign () {
+		return align;
 	}
 
 	public float getMinWidth () {
@@ -192,31 +180,13 @@ public class Image extends Widget {
 	}
 
 	public float getPrefWidth () {
-		if (region != null) return region.getRegionWidth();
-		if (patch != null) return patch.getTotalWidth();
+		if (drawable != null) return drawable.getMinWidth();
 		return 0;
 	}
 
 	public float getPrefHeight () {
-		if (region != null) return region.getRegionHeight();
-		if (patch != null) return patch.getTotalHeight();
+		if (drawable != null) return drawable.getMinHeight();
 		return 0;
-	}
-
-	public boolean touchDown (float x, float y, int pointer) {
-		return clickListener != null;
-	}
-
-	public void touchUp (float x, float y, int pointer) {
-		if (hit(x, y) == null) return;
-		if (clickListener != null) clickListener.click(this, x, y);
-	}
-
-	public void touchDragged (float x, float y, int pointer) {
-	}
-
-	public void setClickListener (ClickListener clickListener) {
-		this.clickListener = clickListener;
 	}
 
 	public float getImageX () {
@@ -233,5 +203,14 @@ public class Image extends Widget {
 
 	public float getImageHeight () {
 		return imageHeight;
+	}
+
+	public String toString () {
+		String name = getName();
+		if (name != null) return name;
+		String className = getClass().getName();
+		int dotIndex = className.lastIndexOf('.');
+		if (dotIndex != -1) className = className.substring(dotIndex + 1);
+		return (className.indexOf('$') != -1 ? "Image " : "") + className + ": " + drawable;
 	}
 }

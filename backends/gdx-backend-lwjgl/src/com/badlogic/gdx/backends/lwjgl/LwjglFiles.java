@@ -16,13 +16,16 @@
 
 package com.badlogic.gdx.backends.lwjgl;
 
+import java.io.File;
+
 import com.badlogic.gdx.Files;
 import com.badlogic.gdx.files.FileHandle;
 
 /** @author mzechner
  * @author Nathan Sweet */
 public final class LwjglFiles implements Files {
-	static public final String externalPath = System.getProperty("user.home") + "/";
+	static public final String externalPath = System.getProperty("user.home") + File.separator;
+	static public final String localPath = new File("").getAbsolutePath() + File.separator;
 
 	@Override
 	public FileHandle getFileHandle (String fileName, FileType type) {
@@ -53,7 +56,7 @@ public final class LwjglFiles implements Files {
 	public FileHandle local (String path) {
 		return new LwjglFileHandle(path, FileType.Local);
 	}
-	
+
 	@Override
 	public String getExternalStoragePath () {
 		return externalPath;
@@ -63,14 +66,14 @@ public final class LwjglFiles implements Files {
 	public boolean isExternalStorageAvailable () {
 		return true;
 	}
-	
+
 	@Override
 	public String getLocalStoragePath () {
-		return "";
+		return localPath;
 	}
 
 	@Override
 	public boolean isLocalStorageAvailable () {
 		return true;
-	}	
+	}
 }

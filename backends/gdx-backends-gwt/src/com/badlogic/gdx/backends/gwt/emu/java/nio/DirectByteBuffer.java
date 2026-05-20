@@ -19,32 +19,36 @@ package java.nio;
 
 import com.google.gwt.corp.compatibility.Endianness;
 import com.google.gwt.corp.compatibility.Numbers;
-import com.google.gwt.typedarrays.client.ArrayBuffer;
-import com.google.gwt.typedarrays.client.ArrayBufferView;
-import com.google.gwt.typedarrays.client.Int8Array;
+import com.google.gwt.typedarrays.client.ArrayBufferNative;
+import com.google.gwt.typedarrays.client.Int8ArrayNative;
+import com.google.gwt.typedarrays.shared.ArrayBuffer;
+import com.google.gwt.typedarrays.shared.ArrayBufferView;
+import com.google.gwt.typedarrays.shared.Int8Array;
 
-/** DirectByteBuffer, DirectReadWriteByteBuffer and DirectReadOnlyHeapByteBuffer compose the implementation of direct byte buffers.
+/** DirectByteBuffer, DirectReadWriteByteBuffer and DirectReadOnlyHeapByteBuffer compose the implementation of direct byte
+ * buffers.
  * <p>
  * DirectByteBuffer implements all the shared readonly methods and is extended by the other two classes.
  * </p>
  * <p>
  * All methods are marked final for runtime performance.
- * </p> */
+ * </p>
+ */
 abstract class DirectByteBuffer extends BaseByteBuffer implements HasArrayBufferView {
 
 	Int8Array byteArray;
 
 	DirectByteBuffer (int capacity) {
-		this(ArrayBuffer.create(capacity), capacity, 0);
+		this(ArrayBufferNative.create(capacity), capacity, 0);
 	}
 
 	DirectByteBuffer (ArrayBuffer buf) {
-		this(buf, buf.getByteLength(), 0);
+		this(buf, buf.byteLength(), 0);
 	}
 
 	DirectByteBuffer (ArrayBuffer buffer, int capacity, int offset) {
 		super(capacity);
-		byteArray = Int8Array.create(buffer, offset, capacity);
+		byteArray = Int8ArrayNative.create(buffer, offset, capacity);
 	}
 
 	public ArrayBufferView getTypedArray () {

@@ -18,68 +18,106 @@ package com.badlogic.gdx.assets.loaders.resolvers;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.loaders.FileHandleResolver;
-import com.badlogic.gdx.assets.loaders.resolvers.ResolutionFileResolver.Resolution;
 import com.badlogic.gdx.files.FileHandle;
 
+/** This {@link FileHandleResolver} uses a given list of {@link Resolution}s to determine the best match based on the current back
+ * buffer size. An example of how this resolver works:
+ * 
+ * <p>
+ * Let's assume that we have only a single {@link Resolution} added to this resolver. This resolution has the following
+ * properties:
+ * </p>
+ * 
+ * <ul>
+ * <li>{@code portraitWidth = 1920}</li>
+ * <li>{@code portraitHeight = 1080}</li>
+ * <li>{@code folder = "1920x1080"}</li>
+ * </ul>
+ * 
+ * <p>
+ * One would now supply a file to be found to the resolver. For this example, we assume it is "{@code textures/walls/brick.png}".
+ * Since there is only a single {@link Resolution}, this will be the best match for any screen size. The resolver will now try to
+ * find the file in the following ways:
+ * </p>
+ * 
+ * <ul>
+ * <li>{@code "textures/walls/1920x1080/brick.png"}</li>
+ * <li>{@code "textures/walls/brick.png"}</li>
+ * </ul>
+ * 
+ * <p>
+ * The files are ultimately resolved via the given {{@link #baseResolver}. In case the first version cannot be resolved, the
+ * fallback will try to search for the file without the resolution folder.
+ * </p>
+ */
 public class ResolutionFileResolver implements FileHandleResolver {
-	public static class Resolution {
-		int portraitWidth;
-		int portraitHeight;
-		String suffix;
 
-		public Resolution (int portraitWidth, int portraitHeight, String suffix) {
+	public static class Resolution {
+		public final int portraitWidth;
+		public final int portraitHeight;
+
+		/** The name of the folder, where the assets which fit this resolution, are located. */
+		public final String folder;
+
+		/** Constructs a {@code Resolution}.
+		 * @param portraitWidth This resolution's width.
+		 * @param portraitHeight This resolution's height.
+		 * @param folder The name of the folder, where the assets which fit this resolution, are located. */
+		public Resolution (int portraitWidth, int portraitHeight, String folder) {
 			this.portraitWidth = portraitWidth;
 			this.portraitHeight = portraitHeight;
-			this.suffix = suffix;
+			this.folder = folder;
 		}
 	}
 
-	final FileHandleResolver baseResolver;
-	final Resolution[] descriptors;
+	protected final FileHandleResolver baseResolver;
+	protected final Resolution[] descriptors;
 
+	/** Creates a {@code ResolutionFileResolver} based on a given {@link FileHandleResolver} and a list of {@link Resolution}s.
+	 * @param baseResolver The {@link FileHandleResolver} that will ultimately used to resolve the file.
+	 * @param descriptors A list of {@link Resolution}s. At least one has to be supplied. */
 	public ResolutionFileResolver (FileHandleResolver baseResolver, Resolution... descriptors) {
+		if (descriptors.length == 0) throw new IllegalArgumentException("At least one Resolution needs to be supplied.");
 		this.baseResolver = baseResolver;
 		this.descriptors = descriptors;
 	}
 
 	@Override
 	public FileHandle resolve (String fileName) {
-		Resolution bestDesc = choose(descriptors);
+		Resolution bestResolution = choose(descriptors);
 		FileHandle originalHandle = new FileHandle(fileName);
-		FileHandle handle = baseResolver.resolve(resolve(originalHandle, bestDesc.suffix));
+		FileHandle handle = baseResolver.resolve(resolve(originalHandle, bestResolution.folder));
 		if (!handle.exists()) handle = baseResolver.resolve(fileName);
 		return handle;
 	}
 
 	protected String resolve (FileHandle originalHandle, String suffix) {
-		return originalHandle.parent() + "/" + suffix + "/" + originalHandle.name();
+		String parentString = "";
+		FileHandle parent = originalHandle.parent();
+		if (parent != null && !parent.name().equals("")) {
+			parentString = parent + "/";
+		}
+		return parentString + suffix + "/" + originalHandle.name();
 	}
 
 	static public Resolution choose (Resolution... descriptors) {
-		int width = 0;
-		if (Gdx.graphics.getWidth() > Gdx.graphics.getHeight()) {
-			width = Gdx.graphics.getHeight();
-		} else {
-			width = Gdx.graphics.getWidth();
-		}
+		int w = Gdx.graphics.getBackBufferWidth(), h = Gdx.graphics.getBackBufferHeight();
 
-		Resolution bestDesc = null;
-		// Find lowest.
-		int best = Integer.MAX_VALUE;
-		for (int i = 0, n = descriptors.length; i < n; i++) {
-			if (descriptors[i].portraitWidth < best) {
-				best = descriptors[i].portraitWidth;
-				bestDesc = descriptors[i];
+		// Prefer the shortest side.
+		Resolution best = descriptors[0];
+		if (w < h) {
+			for (int i = 0, n = descriptors.length; i < n; i++) {
+				Resolution other = descriptors[i];
+				if (w >= other.portraitWidth && other.portraitWidth >= best.portraitWidth && h >= other.portraitHeight
+					&& other.portraitHeight >= best.portraitHeight) best = descriptors[i];
+			}
+		} else {
+			for (int i = 0, n = descriptors.length; i < n; i++) {
+				Resolution other = descriptors[i];
+				if (w >= other.portraitHeight && other.portraitHeight >= best.portraitHeight && h >= other.portraitWidth
+					&& other.portraitWidth >= best.portraitWidth) best = descriptors[i];
 			}
 		}
-		// Find higher, but not over the screen res.
-		best = Integer.MAX_VALUE;
-		for (int i = 0, n = descriptors.length; i < n; i++) {
-			if (descriptors[i].portraitWidth <= width) {
-				best = descriptors[i].portraitWidth;
-				bestDesc = descriptors[i];
-			}
-		}
-		return bestDesc;
+		return best;
 	}
 }

@@ -16,26 +16,21 @@
 
 package com.badlogic.gdx.tests;
 
+import static com.badlogic.gdx.scenes.scene2d.actions.Actions.moveBy;
+import static com.badlogic.gdx.scenes.scene2d.actions.Actions.parallel;
+import static com.badlogic.gdx.scenes.scene2d.actions.Actions.sequence;
+
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.GL10;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.scenes.scene2d.Action;
-import com.badlogic.gdx.scenes.scene2d.OnActionCompleted;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.actions.MoveBy;
-import com.badlogic.gdx.scenes.scene2d.actions.Parallel;
-import com.badlogic.gdx.scenes.scene2d.actions.Sequence;
+import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.tests.utils.GdxTest;
 
-public class ActionSequenceTest extends GdxTest implements OnActionCompleted {
-
-	@Override
-	public boolean needsGL20 () {
-		return false;
-	}
+public class ActionSequenceTest extends GdxTest implements Runnable {
 
 	Image img;
 	Image img2;
@@ -45,46 +40,43 @@ public class ActionSequenceTest extends GdxTest implements OnActionCompleted {
 
 	@Override
 	public void create () {
-		stage = new Stage(480, 320, true);
+		stage = new Stage();
 		texture = new Texture(Gdx.files.internal("data/badlogic.jpg"), false);
 		texture.setFilter(TextureFilter.Linear, TextureFilter.Linear);
 		img = new Image(new TextureRegion(texture));
-		img.width = img.height = 100;
-		img.originX = 50;
-		img.originY = 50;
-		img.x = img.y = 100;
+		img.setSize(100, 100);
+		img.setOrigin(50, 50);
+		img.setPosition(100, 100);
 
 		img2 = new Image(new TextureRegion(texture));
-		img2.width = img2.height = 100;
-		img2.originX = 50;
-		img2.originY = 50;
-		img2.x = img2.y = 100;
+		img2.setSize(100, 100);
+		img2.setOrigin(50, 50);
+		img2.setPosition(100, 100);
 
 		img3 = new Image(new TextureRegion(texture));
-		img3.width = img3.height = 100;
-		img3.originX = 50;
-		img3.originY = 50;
-		img3.x = img3.y = 100;
+		img3.setSize(100, 100);
+		img3.setOrigin(50, 50);
+		img3.setPosition(100, 100);
 
 		stage.addActor(img);
 		stage.addActor(img2);
 		stage.addActor(img3);
-		
-		img.action(Sequence.$());
-		img2.action(Parallel.$(Sequence.$(), MoveBy.$(100, 0, 1)));
-		img3.action(Sequence.$(Parallel.$(MoveBy.$(100, 200, 2))));
+
+		img.addAction(sequence());
+		img2.addAction(parallel(sequence(), moveBy(100, 0, 1)));
+		img3.addAction(sequence(parallel(moveBy(100, 200, 2)), Actions.run(this)));
 	}
 
 	@Override
 	public void render () {
-		Gdx.gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
+		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
 		stage.act(Math.min(Gdx.graphics.getDeltaTime(), 1 / 30f));
 		stage.draw();
 	}
 
 	@Override
-	public void completed (Action action) {
+	public void run () {
 		System.out.println("completed");
 	}
 

@@ -16,7 +16,7 @@
 
 package com.badlogic.gdx.utils;
 
-/** A pausable thread. The runnable must not execute an inifite loop but should return control to the thread as often as possible
+/** A pausable thread. The runnable must not execute an infinite loop but should return control to the thread as often as possible
  * so that the thread can actually pause.
  * 
  * @author mzechner */
@@ -25,7 +25,7 @@ public class PauseableThread extends Thread {
 	boolean paused = false;
 	boolean exit = false;
 
-	/** Constructs a new thread setting the runnable which will be called repeatadly in a loop.
+	/** Constructs a new thread setting the runnable which will be called repeatedly in a loop.
 	 * 
 	 * @param runnable the runnable. */
 	public PauseableThread (Runnable runnable) {

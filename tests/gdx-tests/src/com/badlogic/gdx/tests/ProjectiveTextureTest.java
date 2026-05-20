@@ -27,39 +27,31 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.VertexAttribute;
 import com.badlogic.gdx.graphics.VertexAttributes.Usage;
-import com.badlogic.gdx.graphics.g3d.loaders.ModelLoaderOld;
 import com.badlogic.gdx.graphics.glutils.ImmediateModeRenderer20;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Button.ButtonStyle;
-import com.badlogic.gdx.scenes.scene2d.ui.ClickListener;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Label.LabelStyle;
 import com.badlogic.gdx.scenes.scene2d.ui.SelectBox;
 import com.badlogic.gdx.scenes.scene2d.ui.SelectBox.SelectBoxStyle;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton.TextButtonStyle;
-import com.badlogic.gdx.scenes.scene2d.ui.tablelayout.Table;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.tests.utils.GdxTest;
 import com.badlogic.gdx.tests.utils.PerspectiveCamController;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 
 public class ProjectiveTextureTest extends GdxTest {
 
-	@Override
-	public boolean needsGL20 () {
-		return true;
-	}
-
 	PerspectiveCamera cam;
 	PerspectiveCamera projector;
 	Texture texture;
 	Mesh plane;
-	Mesh cube;
 	Matrix4 planeTrans = new Matrix4();
 	Matrix4 cubeTrans = new Matrix4();
 	Matrix4 modelNormal = new Matrix4();
@@ -71,6 +63,8 @@ public class ProjectiveTextureTest extends GdxTest {
 	ImmediateModeRenderer20 renderer;
 
 	float angle = 0;
+	private SelectBox camera;
+	private Label fps;
 
 	@Override
 	public void create () {
@@ -82,15 +76,15 @@ public class ProjectiveTextureTest extends GdxTest {
 		multiplexer.addProcessor(controller);
 		Gdx.input.setInputProcessor(multiplexer);
 
-		renderer = new ImmediateModeRenderer20(false, true, 0);
+		// renderer = new ImmediateModeRenderer20(false, true, 0);
 	}
 
 	public void setupScene () {
-		plane = new Mesh(true, 4, 6, new VertexAttribute(Usage.Position, 3, ShaderProgram.POSITION_ATTRIBUTE), new VertexAttribute(
-			Usage.Normal, 3, ShaderProgram.NORMAL_ATTRIBUTE));
+		plane = new Mesh(true, 4, 6, new VertexAttribute(Usage.Position, 3, ShaderProgram.POSITION_ATTRIBUTE),
+			new VertexAttribute(Usage.Normal, 3, ShaderProgram.NORMAL_ATTRIBUTE));
 		plane.setVertices(new float[] {-10, -1, 10, 0, 1, 0, 10, -1, 10, 0, 1, 0, 10, -1, -10, 0, 1, 0, -10, -1, -10, 0, 1, 0});
 		plane.setIndices(new short[] {3, 2, 1, 1, 0, 3});
-		cube = ModelLoaderOld.loadObj(Gdx.files.internal("data/sphere.obj").read());
+
 		texture = new Texture(Gdx.files.internal("data/badlogic.jpg"), Format.RGB565, true);
 		texture.setFilter(TextureFilter.MipMap, TextureFilter.Nearest);
 
@@ -108,26 +102,25 @@ public class ProjectiveTextureTest extends GdxTest {
 	}
 
 	public void setupUI () {
-		ui = new Stage(480, 320, true);
-		skin = new Skin(Gdx.files.internal("data/uiskin.json"), Gdx.files.internal("data/uiskin.png"));
-		TextButton reload = new TextButton("Reload Shaders", skin.getStyle(TextButtonStyle.class), "reload");
-		SelectBox camera = new SelectBox(new String[] {"Camera", "Light"}, skin.getStyle(SelectBoxStyle.class), "camera");
-		Label fps = new Label("fps: ", skin.getStyle(LabelStyle.class), "fps");
+		ui = new Stage();
+		skin = new Skin(Gdx.files.internal("data/uiskin.json"));
+		TextButton reload = new TextButton("Reload Shaders", skin.get(TextButtonStyle.class));
+		camera = new SelectBox(skin.get(SelectBoxStyle.class));
+		camera.setItems("Camera", "Light");
+		fps = new Label("fps: ", skin.get(LabelStyle.class));
 
 		Table table = new Table();
-		table.width = ui.width();
-		table.height = ui.height();
+		table.setFillParent(true);
 		table.top().padTop(15);
 		table.add(reload).spaceRight(5);
 		table.add(camera).spaceRight(5);
 		table.add(fps);
 		ui.addActor(table);
 
-		reload.setClickListener(new ClickListener() {
-			@Override
-			public void click (Actor button, float x, float y) {
-				ShaderProgram prog = new ShaderProgram(Gdx.files.internal("data/shaders/projtex-vert.glsl").readString(), Gdx.files
-					.internal("data/shaders/projtex-frag.glsl").readString());
+		reload.addListener(new ClickListener() {
+			public void clicked (InputEvent event, float x, float y) {
+				ShaderProgram prog = new ShaderProgram(Gdx.files.internal("data/shaders/projtex-vert.glsl").readString(),
+					Gdx.files.internal("data/shaders/projtex-frag.glsl").readString());
 				if (prog.isCompiled() == false) {
 					Gdx.app.log("GLSL ERROR", "Couldn't reload shaders:\n" + prog.getLog());
 				} else {
@@ -140,8 +133,8 @@ public class ProjectiveTextureTest extends GdxTest {
 
 	public void setupShaders () {
 		ShaderProgram.pedantic = false;
-		projTexShader = new ShaderProgram(Gdx.files.internal("data/shaders/projtex-vert.glsl").readString(), Gdx.files.internal(
-			"data/shaders/projtex-frag.glsl").readString());
+		projTexShader = new ShaderProgram(Gdx.files.internal("data/shaders/projtex-vert.glsl").readString(),
+			Gdx.files.internal("data/shaders/projtex-frag.glsl").readString());
 		if (!projTexShader.isCompiled()) throw new GdxRuntimeException("Couldn't compile shader: " + projTexShader.getLog());
 	}
 
@@ -157,22 +150,24 @@ public class ProjectiveTextureTest extends GdxTest {
 		projector.update();
 
 		texture.bind();
-		projTexShader.begin();
+		projTexShader.bind();
 
-		if (((SelectBox)ui.findActor("camera")).getSelectionIndex() == 0) {
+		if (camera.getSelectedIndex() == 0) {
 			renderMesh(projTexShader, cam.combined, projector.combined, planeTrans, plane, Color.WHITE);
-			renderMesh(projTexShader, cam.combined, projector.combined, cubeTrans, cube, Color.WHITE);
+			/*
+			 * TODO: Fix method rendering renderMesh(projTexShader, cam.combined, projector.combined, cubeTrans, cube, Color.WHITE);
+			 */
 		} else {
 			renderMesh(projTexShader, projector.combined, projector.combined, planeTrans, plane, Color.WHITE);
-			renderMesh(projTexShader, projector.combined, projector.combined, cubeTrans, cube, Color.WHITE);
+			/*
+			 * TODO: Fix method rendering renderMesh(projTexShader, projector.combined, projector.combined, cubeTrans, cube,
+			 * Color.WHITE);
+			 */
 		}
 
-		projTexShader.end();
-
-		Label label = (Label)ui.findActor("fps");
-		label.setText("fps: " + Gdx.graphics.getFramesPerSecond());
+		fps.setText("fps: " + Gdx.graphics.getFramesPerSecond());
+		ui.act();
 		ui.draw();
-		Table.drawDebug(ui);
 	}
 
 	Vector3 position = new Vector3();
@@ -195,10 +190,9 @@ public class ProjectiveTextureTest extends GdxTest {
 	public void dispose () {
 		texture.dispose();
 		plane.dispose();
-		cube.dispose();
 		projTexShader.dispose();
 		ui.dispose();
 		skin.dispose();
-		renderer.dispose();
+		// renderer.dispose();
 	}
 }

@@ -16,33 +16,34 @@
 
 package com.badlogic.gdx.tests;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.GL10;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.graphics.glutils.ImmediateModeRenderer10;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Group;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Align;
+import com.badlogic.gdx.scenes.scene2d.Touchable;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.tests.utils.GdxTest;
+import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Scaling;
+import com.badlogic.gdx.utils.ScreenUtils;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
 public class StageTest extends GdxTest implements InputProcessor {
-	private static final int NUM_GROUPS = 5;
-	private static final int NUM_SPRITES = (int)Math.sqrt(400 / NUM_GROUPS);
+	private static final int NUM_GROUPS = 4;
+	private static final int NUM_SPRITES = (int)Math.sqrt(150 / NUM_GROUPS);
 	private static final float SPACING = 5;
 	ShapeRenderer renderer;
 	Stage stage;
@@ -54,26 +55,25 @@ public class StageTest extends GdxTest implements InputProcessor {
 	boolean rotateSprites = false;
 	boolean scaleSprites = false;
 	float angle;
-	Vector2 point = new Vector2();
-	List<Image> images = new ArrayList<Image>();
+	Array<Actor> sprites = new Array();
 	float scale = 1;
 	float vScale = 1;
+	Label fps;
 
 	@Override
 	public void create () {
 		texture = new Texture(Gdx.files.internal("data/badlogicsmall.jpg"));
 		texture.setFilter(TextureFilter.Linear, TextureFilter.Linear);
-		font = new BitmapFont(Gdx.files.internal("data/arial-15.fnt"), false);
+		font = new BitmapFont(Gdx.files.internal("data/lsans-15.fnt"), false);
 
-		stage = new Stage(480, 320, true);
+		stage = new Stage(new ScreenViewport());
 
 		float loc = (NUM_SPRITES * (32 + SPACING) - SPACING) / 2;
 		for (int i = 0; i < NUM_GROUPS; i++) {
-			Group group = new Group("group" + i);
-			group.x = (float)Math.random() * (stage.width() - NUM_SPRITES * (32 + SPACING));
-			group.y = (float)Math.random() * (stage.height() - NUM_SPRITES * (32 + SPACING));
-			group.originX = loc;
-			group.originY = loc;
+			Group group = new Group();
+			group.setX((float)Math.random() * (stage.getWidth() - NUM_SPRITES * (32 + SPACING)));
+			group.setY((float)Math.random() * (stage.getHeight() - NUM_SPRITES * (32 + SPACING)));
+			group.setOrigin(loc, loc);
 
 			fillGroup(group, texture);
 			stage.addActor(group);
@@ -81,51 +81,73 @@ public class StageTest extends GdxTest implements InputProcessor {
 
 		uiTexture = new Texture(Gdx.files.internal("data/ui.png"));
 		uiTexture.setFilter(TextureFilter.Linear, TextureFilter.Linear);
-		ui = new Stage(480, 320, false);
+		ui = new Stage(new ScreenViewport());
 
-		Image blend = new Image(new TextureRegion(uiTexture, 0, 0, 64, 32), Scaling.none, Align.CENTER, "blend") {
-			public boolean touchDown (float x, float y, int pointer) {
-				if (stage.getSpriteBatch().isBlendingEnabled())
-					stage.getSpriteBatch().disableBlending();
+		Image blend = new Image(new TextureRegion(uiTexture, 0, 0, 64, 32));
+		blend.setAlign(Align.center);
+		blend.setScaling(Scaling.none);
+		blend.addListener(new InputListener() {
+			public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
+				if (stage.getBatch().isBlendingEnabled())
+					stage.getBatch().disableBlending();
 				else
-					stage.getSpriteBatch().enableBlending();
-				return false;
+					stage.getBatch().enableBlending();
+				return true;
 			}
-		};
-		blend.width = blend.getPrefWidth();
-		blend.height = blend.getPrefHeight();
-		blend.y = ui.height() - 64;
+		});
+		blend.setY(ui.getHeight() - 64);
 
-		Image rotate = new Image(new TextureRegion(uiTexture, 64, 0, 64, 32), Scaling.none, Align.CENTER, "rotate") {
-			public boolean touchDown (float x, float y, int pointer) {
+		Image rotate = new Image(new TextureRegion(uiTexture, 64, 0, 64, 32));
+		rotate.setAlign(Align.center);
+		rotate.setScaling(Scaling.none);
+		rotate.addListener(new InputListener() {
+			public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
 				rotateSprites = !rotateSprites;
-				return false;
+				return true;
 			}
-		};
-		rotate.width = rotate.getPrefWidth();
-		rotate.height = rotate.getPrefHeight();
-		rotate.y = blend.y;
-		rotate.x = 64;
+		});
+		rotate.setPosition(64, blend.getY());
 
-		Image scale = new Image(new TextureRegion(uiTexture, 64, 32, 64, 32), Scaling.none, Align.CENTER, "scale") {
-			public boolean touchDown (float x, float y, int pointer) {
+		Image scale = new Image(new TextureRegion(uiTexture, 64, 32, 64, 32));
+		scale.setAlign(Align.center);
+		scale.setScaling(Scaling.none);
+		scale.addListener(new InputListener() {
+			public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
 				scaleSprites = !scaleSprites;
-				return false;
+				return true;
 			}
-		};
-		scale.width = scale.getPrefWidth();
-		scale.height = scale.getPrefHeight();
-		scale.y = blend.y;
-		scale.x = 128;
+		});
+		scale.setPosition(128, blend.getY());
+
+		{
+			Actor shapeActor = new Actor() {
+				public void drawDebug (ShapeRenderer shapes) {
+					shapes.set(ShapeType.Filled);
+					shapes.setColor(getColor());
+					shapes.rect(getX(), getY(), getOriginX(), getOriginY(), getWidth(), getHeight(), getScaleX(), getScaleY(),
+						getRotation());
+				}
+			};
+			shapeActor.setBounds(0, 0, 100, 150);
+			shapeActor.setOrigin(50, 75);
+			shapeActor.debug();
+			sprites.add(shapeActor);
+
+			Group shapeGroup = new Group();
+			shapeGroup.setBounds(300, 300, 300, 300);
+			shapeGroup.setOrigin(50, 75);
+			shapeGroup.setTouchable(Touchable.childrenOnly);
+			shapeGroup.addActor(shapeActor);
+			stage.addActor(shapeGroup);
+		}
 
 		ui.addActor(blend);
 		ui.addActor(rotate);
 		ui.addActor(scale);
 
-		Label fps = new Label("fps: 0", new Label.LabelStyle(font, Color.WHITE), "fps");
-		fps.x = 10;
-		fps.y = 30;
-		fps.color.set(0, 1, 0, 1);
+		fps = new Label("fps: 0", new Label.LabelStyle(font, Color.WHITE));
+		fps.setPosition(10, 30);
+		fps.setColor(0, 1, 0, 1);
 		ui.addActor(fps);
 
 		renderer = new ShapeRenderer();
@@ -136,40 +158,36 @@ public class StageTest extends GdxTest implements InputProcessor {
 		float advance = 32 + SPACING;
 		for (int y = 0; y < NUM_SPRITES * advance; y += advance)
 			for (int x = 0; x < NUM_SPRITES * advance; x += advance) {
-				Image img = new Image(new TextureRegion(texture), Scaling.none, Align.CENTER, group.name + "-sprite" + x * y);
-				img.x = x;
-				img.y = y;
-				img.width = 32;
-				img.height = 32;
-				img.originX = 16;
-				img.originY = 16;
+				Image img = new Image(new TextureRegion(texture));
+				img.setAlign(Align.center);
+				img.setScaling(Scaling.none);
+				img.setBounds(x, y, 32, 32);
+				img.setOrigin(16, 16);
 				group.addActor(img);
-				images.add(img);
+				sprites.add(img);
 			}
 	}
 
+	private final Vector2 stageCoords = new Vector2();
+
 	@Override
 	public void render () {
-		Gdx.gl.glViewport(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-		Gdx.gl.glClearColor(0.2f, 0.2f, 0.2f, 1);
-		Gdx.gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
+		Gdx.gl.glViewport(0, 0, Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight());
+		ScreenUtils.clear(0.2f, 0.2f, 0.2f, 1);
 
 		if (Gdx.input.isTouched()) {
-			stage.toStageCoordinates(Gdx.input.getX(), Gdx.input.getY(), point);
-			Actor actor = stage.hit(point.x, point.y);
-
+			stage.screenToStageCoordinates(stageCoords.set(Gdx.input.getX(), Gdx.input.getY()));
+			Actor actor = stage.hit(stageCoords.x, stageCoords.y, true);
 			if (actor != null)
-				if (actor instanceof Image)
-					((Image)actor).color.set((float)Math.random(), (float)Math.random(), (float)Math.random(),
-						0.5f + 0.5f * (float)Math.random());
+				actor.setColor((float)Math.random(), (float)Math.random(), (float)Math.random(), 0.5f + 0.5f * (float)Math.random());
 		}
 
-		int len = stage.getGroups().size();
-		for (int i = 0; i < len; i++)
-			if (rotateSprites)
-				stage.getGroups().get(i).rotation += Gdx.graphics.getDeltaTime();
-			else
-				stage.getGroups().get(i).rotation = 0;
+		Array<Actor> actors = stage.getActors();
+		int len = actors.size;
+		if (rotateSprites) {
+			for (int i = 0; i < len; i++)
+				actors.get(i).rotateBy(Gdx.graphics.getDeltaTime() * 10);
+		}
 
 		scale += vScale * Gdx.graphics.getDeltaTime();
 		if (scale > 1) {
@@ -181,43 +199,44 @@ public class StageTest extends GdxTest implements InputProcessor {
 			vScale = -vScale;
 		}
 
-		len = images.size();
+		len = sprites.size;
 		for (int i = 0; i < len; i++) {
-			Image img = images.get(i);
+			Actor sprite = sprites.get(i);
 			if (rotateSprites)
-				img.rotation -= 40 * Gdx.graphics.getDeltaTime();
+				sprite.rotateBy(-40 * Gdx.graphics.getDeltaTime());
 			else
-				img.rotation = 0;
+				sprite.setRotation(0);
 
 			if (scaleSprites) {
-				img.scaleX = scale;
-				img.scaleY = scale;
+				sprite.setScale(scale);
 			} else {
-				img.scaleX = 1;
-				img.scaleY = 1;
+				sprite.setScale(1);
 			}
-			img.invalidate();
 		}
 
 		stage.draw();
 
 		renderer.begin(ShapeType.Point);
 		renderer.setColor(1, 0, 0, 1);
-		len = stage.getRoot().getGroups().size();
+		len = actors.size;
 		for (int i = 0; i < len; i++) {
-			Group group = stage.getRoot().getGroups().get(i);
-			renderer.point(group.x + group.originX, group.y + group.originY, 0);
+			Group group = (Group)actors.get(i);
+			renderer.point(group.getX() + group.getOriginX(), group.getY() + group.getOriginY(), 0);
 		}
 		renderer.end();
 
-		((Label)ui.findActor("fps")).setText("fps: " + Gdx.graphics.getFramesPerSecond() + ", actors " + images.size()
-			+ ", groups " + stage.getGroups().size());
+		fps.setText("fps: " + Gdx.graphics.getFramesPerSecond() + ", actors " + sprites.size + ", groups " + sprites.size);
 		ui.draw();
 	}
 
 	@Override
 	public boolean touchDown (int x, int y, int pointer, int button) {
 		return ui.touchDown(x, y, pointer, button);
+	}
+
+	public void resize (int width, int height) {
+		ui.getViewport().update(width, height, true);
+		stage.getViewport().update(width, height, true);
 	}
 
 	@Override

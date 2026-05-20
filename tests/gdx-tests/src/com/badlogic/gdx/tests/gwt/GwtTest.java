@@ -1,3 +1,19 @@
+/*******************************************************************************
+ * Copyright 2011 See AUTHORS file.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.badlogic.gdx.tests.gwt;
 
 import java.util.ArrayList;
@@ -5,7 +21,6 @@ import java.util.List;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Preferences;
-import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Mesh;
@@ -25,6 +40,7 @@ import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.tests.utils.GdxTest;
 import com.badlogic.gdx.utils.GdxRuntimeException;
+import com.badlogic.gdx.utils.ScreenUtils;
 
 public class GwtTest extends GdxTest {
 	ShaderProgram shader;
@@ -44,8 +60,9 @@ public class GwtTest extends GdxTest {
 		Preferences pref = Gdx.app.getPreferences("test");
 		boolean resultb = pref.getBoolean("test");
 		int resulti = pref.getInteger("test");
-		
-		shader = new ShaderProgram(Gdx.files.internal("data/shaders/shader-vs.glsl"), Gdx.files.internal("data/shaders/shader-fs.glsl"));
+
+		shader = new ShaderProgram(Gdx.files.internal("data/shaders/shader-vs.glsl"),
+			Gdx.files.internal("data/shaders/shader-fs.glsl"));
 		if (!shader.isCompiled()) throw new GdxRuntimeException(shader.getLog());
 		mesh = new Mesh(VertexDataType.VertexBufferObject, true, 6, 0, VertexAttribute.Position(), VertexAttribute.TexCoords(0));
 		mesh.setVertices(new float[] {-0.5f, -0.5f, 0, 0, 1, 0.5f, -0.5f, 0, 1, 1, 0.5f, 0.5f, 0, 1, 0, 0.5f, 0.5f, 0, 1, 0, -0.5f,
@@ -56,7 +73,7 @@ public class GwtTest extends GdxTest {
 
 		String params = Gdx.files.internal("data/gwttestparams.txt").readString();
 		numSprites = Integer.parseInt(params);
-		
+
 		batch = new SpriteBatch();
 		positions = new ArrayList<Vector2>();
 		for (int i = 0; i < numSprites; i++) {
@@ -66,24 +83,22 @@ public class GwtTest extends GdxTest {
 		sprite.setSize(64, 64);
 		sprite.setOrigin(32, 32);
 
-		font = new BitmapFont(Gdx.files.internal("data/arial-15.fnt"), false);
-		cache = new BitmapFontCache(font);
+		font = new BitmapFont(Gdx.files.internal("data/lsans-15.fnt"), false);
+		cache = font.newFontCache();
 		cache.setColor(Color.RED);
-		cache.setMultiLineText("This is a Test", 0, 0);
-		
-		atlas = new TextureAtlas(Gdx.files.internal("data/pack"));
+		cache.setText("This is a Test", 0, 0);
+
+		atlas = new TextureAtlas(Gdx.files.internal("data/pack.atlas"));
 	}
 
 	@Override
 	public void render () {
-		Gdx.gl.glClearColor(0.2f, 0.2f, 0.2f, 1);
-		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+		ScreenUtils.clear(0.2f, 0.2f, 0.2f, 1);
 		texture.bind(0);
-		shader.begin();
+		shader.bind();
 		shader.setUniformMatrix("u_projView", matrix);
 		shader.setUniformi("u_texture", 0);
 		mesh.render(shader, GL20.GL_TRIANGLES);
-		shader.end();
 
 		batch.begin();
 		batch.draw(atlas.findRegion("font"), 0, 100);
@@ -92,7 +107,9 @@ public class GwtTest extends GdxTest {
 			sprite.setPosition(position.x, position.y);
 			sprite.draw(batch);
 		}
-		font.draw(batch, "fps:" + Gdx.graphics.getFramesPerSecond() + ", delta: " + Gdx.graphics.getDeltaTime() + ", #sprites: " + numSprites, 0, 30);
+		font.draw(batch,
+			"fps:" + Gdx.graphics.getFramesPerSecond() + ", delta: " + Gdx.graphics.getDeltaTime() + ", #sprites: " + numSprites, 0,
+			30);
 		cache.setPosition(200, 200);
 		cache.draw(batch);
 		batch.end();
@@ -112,10 +129,5 @@ public class GwtTest extends GdxTest {
 
 	@Override
 	public void dispose () {
-	}
-
-	@Override
-	public boolean needsGL20 () {
-		return true;
 	}
 }

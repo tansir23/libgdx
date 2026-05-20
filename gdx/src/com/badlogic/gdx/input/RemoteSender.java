@@ -23,8 +23,8 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Peripheral;
 import com.badlogic.gdx.InputProcessor;
 
-/** Sends all inputs from touch, key, accelerometer and compass to a {@link RemoteInput} at the given ip/port. Instantiate this and
- * call sendUpdate() periodically.
+/** Sends all inputs from touch, key, accelerometer and compass to a {@link RemoteInput} at the given ip/port. Instantiate this
+ * and call sendUpdate() periodically.
  * 
  * @author mzechner */
 public class RemoteSender implements InputProcessor {
@@ -42,6 +42,7 @@ public class RemoteSender implements InputProcessor {
 	public static final int ACCEL = 6;
 	public static final int COMPASS = 7;
 	public static final int SIZE = 8;
+	public static final int GYRO = 9;
 
 	public RemoteSender (String ip, int port) {
 		try {
@@ -73,6 +74,10 @@ public class RemoteSender implements InputProcessor {
 			out.writeInt(SIZE);
 			out.writeFloat(Gdx.graphics.getWidth());
 			out.writeFloat(Gdx.graphics.getHeight());
+			out.writeInt(GYRO);
+			out.writeFloat(Gdx.input.getGyroscopeX());
+			out.writeFloat(Gdx.input.getGyroscopeY());
+			out.writeFloat(Gdx.input.getGyroscopeZ());
 		} catch (Throwable t) {
 			out = null;
 			connected = false;
@@ -169,6 +174,11 @@ public class RemoteSender implements InputProcessor {
 	}
 
 	@Override
+	public boolean touchCancelled (int screenX, int screenY, int pointer, int button) {
+		return touchUp(screenX, screenY, pointer, button);
+	}
+
+	@Override
 	public boolean touchDragged (int x, int y, int pointer) {
 		synchronized (this) {
 			if (!connected) return false;
@@ -188,12 +198,12 @@ public class RemoteSender implements InputProcessor {
 	}
 
 	@Override
-	public boolean touchMoved (int x, int y) {
+	public boolean mouseMoved (int x, int y) {
 		return false;
 	}
 
 	@Override
-	public boolean scrolled (int amount) {
+	public boolean scrolled (float amountX, float amountY) {
 		return false;
 	}
 

@@ -18,7 +18,7 @@ package com.badlogic.gdx.tests;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
-import com.badlogic.gdx.graphics.GL10;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Mesh;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.graphics.Pixmap.Format;
@@ -30,23 +30,16 @@ import com.badlogic.gdx.graphics.glutils.MipMapGenerator;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.CheckBox;
-import com.badlogic.gdx.scenes.scene2d.ui.CheckBox.CheckBoxStyle;
-import com.badlogic.gdx.scenes.scene2d.ui.SelectBox;
-import com.badlogic.gdx.scenes.scene2d.ui.SelectBox.SelectBoxStyle;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
-import com.badlogic.gdx.scenes.scene2d.ui.Label.LabelStyle;
+import com.badlogic.gdx.scenes.scene2d.ui.SelectBox;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.SelectBox.SelectBoxStyle;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
-import com.badlogic.gdx.scenes.scene2d.ui.tablelayout.Table;
 import com.badlogic.gdx.tests.utils.GdxTest;
 import com.badlogic.gdx.tests.utils.PerspectiveCamController;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 
 public class MipMapTest extends GdxTest {
-	@Override
-	public boolean needsGL20 () {
-		return true;
-	}
-
 	PerspectiveCamera camera;
 	PerspectiveCamController controller;
 	Mesh mesh;
@@ -57,8 +50,8 @@ public class MipMapTest extends GdxTest {
 	Stage ui;
 	Skin skin;
 	InputMultiplexer multiplexer;
-	SelectBox minFilter;
-	SelectBox magFilter;
+	SelectBox<String> minFilter;
+	SelectBox<String> magFilter;
 	CheckBox hwMipMap;
 
 	@Override
@@ -69,13 +62,13 @@ public class MipMapTest extends GdxTest {
 		camera.update();
 		controller = new PerspectiveCamController(camera);
 
-		mesh = new Mesh(true, 4, 4, new VertexAttribute(Usage.Position, 3, ShaderProgram.POSITION_ATTRIBUTE), new VertexAttribute(
-			Usage.TextureCoordinates, 2, ShaderProgram.TEXCOORD_ATTRIBUTE));
+		mesh = new Mesh(true, 4, 4, new VertexAttribute(Usage.Position, 3, ShaderProgram.POSITION_ATTRIBUTE),
+			new VertexAttribute(Usage.TextureCoordinates, 2, ShaderProgram.TEXCOORD_ATTRIBUTE));
 		mesh.setVertices(new float[] {-1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, -1, 1, 0, -1, 0, -1, 0, 0,});
 		mesh.setIndices(new short[] {0, 1, 2, 3});
 
-		shader = new ShaderProgram(Gdx.files.internal("data/shaders/flattex-vert.glsl").readString(), Gdx.files.internal(
-			"data/shaders/flattex-frag.glsl").readString());
+		shader = new ShaderProgram(Gdx.files.internal("data/shaders/flattex-vert.glsl").readString(),
+			Gdx.files.internal("data/shaders/flattex-frag.glsl").readString());
 		if (!shader.isCompiled()) throw new GdxRuntimeException("shader error: " + shader.getLog());
 
 		textureHW = new Texture(Gdx.files.internal("data/badlogic.jpg"), Format.RGB565, true);
@@ -92,26 +85,27 @@ public class MipMapTest extends GdxTest {
 	}
 
 	private void createUI () {
-		skin = new Skin(Gdx.files.internal("data/uiskin.json"), Gdx.files.internal("data/uiskin.png"));
-		ui = new Stage(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), false);
+		skin = new Skin(Gdx.files.internal("data/uiskin.json"));
+		ui = new Stage();
 
 		String[] filters = new String[TextureFilter.values().length];
 		int idx = 0;
 		for (TextureFilter filter : TextureFilter.values()) {
 			filters[idx++] = filter.toString();
 		}
-		hwMipMap = new CheckBox("Hardware Mips", skin.getStyle(CheckBoxStyle.class), "hardware");
-		minFilter = new SelectBox(filters, skin.getStyle(SelectBoxStyle.class), "minfilter");
-		magFilter = new SelectBox(new String[] {"Nearest", "Linear"}, skin.getStyle(SelectBoxStyle.class), "magfilter");
+		hwMipMap = new CheckBox("Hardware Mips", skin);
+		minFilter = new SelectBox(skin);
+		minFilter.setItems(filters);
+		magFilter = new SelectBox(skin.get(SelectBoxStyle.class));
+		magFilter.setItems("Nearest", "Linear");
 
 		Table table = new Table();
-		table.width = ui.width();
-		table.height = 30;
-		table.y = ui.height() - 30;
+		table.setSize(ui.getWidth(), 30);
+		table.setY(ui.getHeight() - 30);
 		table.add(hwMipMap).spaceRight(5);
-		table.add(new Label("Min Filter", skin.getStyle(LabelStyle.class))).spaceRight(5);
+		table.add(new Label("Min Filter", skin)).spaceRight(5);
 		table.add(minFilter).spaceRight(5);
-		table.add(new Label("Mag Filter", skin.getStyle(LabelStyle.class))).spaceRight(5);
+		table.add(new Label("Mag Filter", skin)).spaceRight(5);
 		table.add(magFilter);
 
 		ui.addActor(table);
@@ -119,24 +113,23 @@ public class MipMapTest extends GdxTest {
 
 	@Override
 	public void render () {
-		Gdx.gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
-		Gdx.gl.glEnable(GL10.GL_TEXTURE_2D);
+		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
 		camera.update();
 
 		currTexture = hwMipMap.isChecked() ? textureHW : textureSW;
 		currTexture.bind();
-		currTexture.setFilter(TextureFilter.valueOf(minFilter.getSelection()), TextureFilter.valueOf(magFilter.getSelection()));
+		currTexture.setFilter(TextureFilter.valueOf(minFilter.getSelected()), TextureFilter.valueOf(magFilter.getSelected()));
 
-		shader.begin();
+		shader.bind();
 		shader.setUniformMatrix("u_projTrans", camera.combined);
 		shader.setUniformi("s_texture", 0);
-		mesh.render(shader, GL10.GL_TRIANGLE_FAN);
-		shader.end();
+		mesh.render(shader, GL20.GL_TRIANGLE_FAN);
 
+		ui.act();
 		ui.draw();
 	}
-	
+
 	@Override
 	public void dispose () {
 		shader.dispose();

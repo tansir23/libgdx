@@ -34,11 +34,6 @@ public class MipMap2D extends GdxTest {
 	Mesh mesh;
 
 	@Override
-	public boolean needsGL20 () {
-		return true;
-	}
-
-	@Override
 	public void create () {
 		String vertexShader = "uniform float u_offset;      \n" + "attribute vec4 a_position;   \n"
 			+ "attribute vec2 a_texCoord;   \n" + "varying vec2 v_texCoord;     \n" + "void main()                  \n"
@@ -49,8 +44,8 @@ public class MipMap2D extends GdxTest {
 			+ "void main()                                         \n" + "{                                                   \n"
 			+ "  gl_FragColor = texture2D( s_texture, v_texCoord );\n" + "}                                                   \n";
 		shader = new ShaderProgram(vertexShader, fragmentShader);
-		mesh = new Mesh(true, 4, 6, new VertexAttribute(Usage.Position, 4, "a_position"), new VertexAttribute(
-			Usage.TextureCoordinates, 2, "a_texCoord"));
+		mesh = new Mesh(true, 4, 6, new VertexAttribute(Usage.Position, 4, "a_position"),
+			new VertexAttribute(Usage.TextureCoordinates, 2, "a_texCoord"));
 		float[] vertices = {-0.5f, 0.5f, 0.0f, 1.5f, // Position 0
 			0.0f, 0.0f, // TexCoord 0
 			-0.5f, -0.5f, 0.0f, 0.75f, // Position 1
@@ -86,12 +81,12 @@ public class MipMap2D extends GdxTest {
 	}
 
 	public void render () {
-		Gdx.gl20.glViewport(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+		Gdx.gl20.glViewport(0, 0, Gdx.graphics.getBackBufferWidth(), Gdx.graphics.getBackBufferHeight());
 		Gdx.gl20.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
 		Gdx.gl20.glActiveTexture(GL20.GL_TEXTURE0);
 		texture.bind();
-		shader.begin();
+		shader.bind();
 		shader.setUniformf("s_texture", 0);
 
 		Gdx.gl20.glTexParameteri(GL20.GL_TEXTURE_2D, GL20.GL_TEXTURE_MIN_FILTER, GL20.GL_NEAREST);
@@ -101,7 +96,5 @@ public class MipMap2D extends GdxTest {
 		Gdx.gl20.glTexParameteri(GL20.GL_TEXTURE_2D, GL20.GL_TEXTURE_MIN_FILTER, GL20.GL_LINEAR_MIPMAP_LINEAR);
 		shader.setUniformf("u_offset", 0.6f);
 		mesh.render(shader, GL20.GL_TRIANGLES);
-
-		shader.end();
 	}
 }

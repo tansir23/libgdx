@@ -592,8 +592,8 @@ public abstract class ByteBuffer extends Buffer implements Comparable<ByteBuffer
 		return put(src, 0, src.length);
 	}
 
-	/** Writes bytes in the given byte array, starting from the specified offset, to the current position and increases the position
-	 * by the number of bytes written.
+	/** Writes bytes in the given byte array, starting from the specified offset, to the current position and increases the
+	 * position by the number of bytes written.
 	 * 
 	 * @param src the source byte array.
 	 * @param off the offset of byte array, must not be negative and not greater than {@code src.length}.
@@ -618,8 +618,8 @@ public abstract class ByteBuffer extends Buffer implements Comparable<ByteBuffer
 		return this;
 	}
 
-	/** Writes all the remaining bytes of the {@code src} byte buffer to this buffer's current position, and increases both buffers'
-	 * position by the number of bytes copied.
+	/** Writes all the remaining bytes of the {@code src} byte buffer to this buffer's current position, and increases both
+	 * buffers' position by the number of bytes copied.
 	 * 
 	 * @param src the source byte buffer.
 	 * @return this buffer.
@@ -820,15 +820,15 @@ public abstract class ByteBuffer extends Buffer implements Comparable<ByteBuffer
 	 * @return a string representing the state of this byte buffer.
 	 * @since Android 1.0 */
 	public String toString () {
-		StringBuffer buf = new StringBuffer();
-		buf.append(getClass().getName());
-		buf.append(", status: capacity="); //$NON-NLS-1$
-		buf.append(capacity());
-		buf.append(" position="); //$NON-NLS-1$
-		buf.append(position());
-		buf.append(" limit="); //$NON-NLS-1$
-		buf.append(limit());
-		return buf.toString();
+		StringBuilder sb = new StringBuilder();
+		sb.append(getClass().getName());
+		sb.append(", status: capacity="); //$NON-NLS-1$
+		sb.append(capacity());
+		sb.append(" position="); //$NON-NLS-1$
+		sb.append(position());
+		sb.append(" limit="); //$NON-NLS-1$
+		sb.append(limit());
+		return sb.toString();
 	}
 
 	public ByteBuffer stringToByteBuffer (String s) {
